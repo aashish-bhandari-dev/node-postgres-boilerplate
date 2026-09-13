@@ -195,11 +195,15 @@ All responses follow a consistent, standardized envelope format:
 ```json
 {
   "success": false,
-  "message": "Validation failed",
+  "message": "Invalid email address",
   "errors": [
     {
       "field": "body.email",
       "message": "Invalid email address"
+    },
+    {
+      "field": "body.name",
+      "message": "Name must be at least 2 characters"
     }
   ],
   "timestamp": "2026-09-13T10:00:00.000Z"
@@ -214,13 +218,13 @@ You don't need to rewrite repetitive controllers, services, routes, pagination, 
 
 ### 1. Pure Auto-CRUD (Zero Boilerplate)
 
-When you add a model to `prisma/schema.prisma` (e.g. `User`, `Post`, `Product`), create a resource file in `src/resources/post.resource.ts`:
+When you add a model to `prisma/schema.prisma` (e.g. `User`, `Post`, `Product`), create a module file in `src/modules/post.module.ts`:
 
 ```typescript
 import { z } from 'zod';
-import { defineResource } from '../core/crud';
+import { defineModule } from '../core/crud';
 
-export const postResource = defineResource({
+export const postModule = defineModule({
   model: 'post', // Lowercase Prisma delegate name
   searchableFields: ['title', 'content'],
   filterFields: ['published', 'authorId'],

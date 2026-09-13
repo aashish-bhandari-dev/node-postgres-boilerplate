@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 import { ApiError } from '../utils/apiError';
 import { HttpStatus } from '../constants/httpStatus';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
+import { formatZodErrors } from '../utils/formatValidation';
 
 export const errorHandler = (
   err: Error | ApiError,
@@ -20,6 +22,13 @@ export const errorHandler = (
     statusCode = err.statusCode;
     message = err.message;
     errors = err.errors;
+  }
+  // Handle Zod Validation Errors
+  else if (err instanceof ZodError) {
+    statusCode = HttpStatus.BAD_REQUEST;
+    const formatted = formatZodErrors(err);
+    message = formatted.firstErrorMessage;
+    errors = formatted.errors;
   }
   // Handle Prisma Known Request Errors
   else if (err instanceof Prisma.PrismaClientKnownRequestError) {

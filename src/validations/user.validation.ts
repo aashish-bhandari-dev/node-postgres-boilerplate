@@ -2,7 +2,9 @@ import { z } from 'zod';
 
 export const createUserSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email address'),
+    email: z
+      .string({ required_error: 'Email is required' })
+      .email('Invalid email address'),
     name: z.string().min(2, 'Name must be at least 2 characters').optional(),
     role: z.enum(['USER', 'ADMIN']).optional().default('USER'),
   }),
