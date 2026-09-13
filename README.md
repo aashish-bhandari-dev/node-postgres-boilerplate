@@ -205,3 +205,104 @@ All responses follow a consistent, standardized envelope format:
   "timestamp": "2026-09-13T10:00:00.000Z"
 }
 ```
+
+---
+
+## ⚡ Zero-Boilerplate Auto-CRUD Engine (Admin CRUDs)
+
+You don't need to rewrite repetitive controllers, services, routes, pagination, or search logic for standard admin CRUDs.
+
+### 1. Pure Auto-CRUD (Zero Boilerplate)
+
+When you add a model to `prisma/schema.prisma` (e.g. `Post` or `Category`), create a resource file in `src/admin/resources/post.resource.ts`:
+
+```typescript
+import { z } from 'zod';
+import { createCrudResource } from '../../core/crud';
+
+export const postAdminResource = createCrudResource({
+  model: 'post', // Lowercase Prisma delegate name
+  searchableFields: ['title', 'content'],
+  filterFields: ['published', 'authorId'],
+  defaultSort: { field: 'createdAt', order: 'desc' },
+  include: { author: { select: { id: true, name: true, email: true } } },
+  validation: {
+    create: z.object({
+      body: z.object({
+        title: z.string().min(1),
+        content: z.string().optional(),
+        authorId: z.string().uuid(),
+      }),
+    }),
+  },
+});
+```
+
+Then register it in `src/admin/registry.ts`:
+
+```typescript
+import { postAdminResource } from './resources/post.resource';
+
+export const adminResources = [
+  postAdminResource,
+  // ... other resources
+];
+```
+
+**That's it!** You immediately get 5 full RESTful endpoints:
+- `GET    /api/v1/admin/posts` (with `?page=1&limit=10&search=keyword&sortBy=title&sortOrder=asc`)
+- `GET    /api/v1/admin/posts/:id`
+- `POST   /api/v1/admin/posts` (with Zod validation)
+- `PATCH  /api/v1/admin/posts/:id` (with Zod validation)
+- `DELETE /api/v1/admin/posts/:id`
+
+### 2. Overriding and Customizing Methods
+
+Whenever you need custom business logic (e.g., sanitizing input, custom authorization, extra endpoints):
+
+```typescript
+import { BaseCrudService, BaseCrudController, createCrudResource } from '../../core/crud';
+
+// 1. Override Service methods or lifecycle hooks
+export class CustomUserService extends BaseCrudService {
+  // Lifecycle hook: normalizes email before create
+  override async beforeCreate(data: Record<string, unknown>) {
+    return {
+      ...data,
+      email: typeof data.email === 'string' ? data.email.toLowerCase().trim() : data.email,
+    };
+  }
+
+  // Method override: prevent deleting system admin
+  override async delete(id: string) {
+    const user = await this.getById(id) as { email?: string };
+    if (user.email === 'admin@example.com') {
+      throw ApiError.forbidden('Cannot delete system administrator');
+    }
+    return super.delete(id);
+  }
+}
+
+// 2. Add custom endpoints to Controller & Router
+export class CustomUserController extends BaseCrudController<CustomUserService> {
+  async toggleActive(req: Request, res: Response, next: NextFunction) {
+    const user = await this.service.getById(req.params.id) as { isActive: boolean };
+    const updated = await this.service.update(req.params.id, { isActive: !user.isActive });
+    ApiResponse.success(res, 'User status toggled', updated);
+  }
+}
+
+const customService = new CustomUserService('user');
+const customController = new CustomUserController(customService);
+
+export const userAdminResource = createCrudResource({
+  model: 'user',
+  service: customService,
+  controller: customController,
+  extendRouter: (router) => {
+    // Mount custom sub-endpoint: PATCH /api/v1/admin/users/:id/toggle-status
+    router.patch('/:id/toggle-status', customController.toggleActive.bind(customController));
+  },
+});
+```
+
