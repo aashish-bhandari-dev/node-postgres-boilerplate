@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { logger } from '../utils/logger';
 
 declare global {
-  // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;
 }
 
@@ -21,12 +20,18 @@ export const prisma =
   });
 
 if (process.env.NODE_ENV === 'development') {
-  // Log Prisma query events in development
-  (prisma as any).$on?.('query', (e: any) => {
-    logger.debug(`Prisma Query: ${e.query} [Params: ${e.params}] (Duration: ${e.duration}ms)`);
+  const devPrisma = prisma as unknown as {
+    $on(event: 'query', callback: (e: Prisma.QueryEvent) => void): void;
+    $on(event: 'error', callback: (e: Prisma.LogEvent) => void): void;
+  };
+
+  devPrisma.$on?.('query', (e: Prisma.QueryEvent) => {
+    logger.debug(
+      `Prisma Query: ${e.query} [Params: ${e.params}] (Duration: ${e.duration}ms)`,
+    );
   });
 
-  (prisma as any).$on?.('error', (e: any) => {
+  devPrisma.$on?.('error', (e: Prisma.LogEvent) => {
     logger.error(`Prisma Error: ${e.message}`);
   });
 

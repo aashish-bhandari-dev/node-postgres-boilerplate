@@ -13,7 +13,7 @@ export class HealthController {
       const dbStart = Date.now();
       await prisma.$queryRaw`SELECT 1`;
       dbLatencyMs = Date.now() - dbStart;
-    } catch (error) {
+    } catch {
       dbStatus = 'unreachable';
     }
 

@@ -32,9 +32,7 @@ const format = winston.format.combine(
     : winston.format.json(),
 );
 
-const transports = [
-  new winston.transports.Console(),
-];
+const transports = [new winston.transports.Console()];
 
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
