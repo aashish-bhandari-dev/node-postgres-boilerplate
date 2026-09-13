@@ -1,6 +1,5 @@
 import { CrudModule } from '../core/crud';
 import { userModule } from './user.module';
-import { postModule } from './post.module';
 
 /**
  * Registered API Modules
@@ -13,5 +12,4 @@ import { postModule } from './post.module';
  */
 export const modules: CrudModule[] = [
   userModule,
-  postModule,
 ];

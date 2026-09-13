@@ -10,34 +10,87 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
+enum UserRole {
+  SUPER_ADMIN
   ADMIN
+  MANAGER
+  CUSTOMER
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  APPLE
+  GITHUB
+  FACEBOOK
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  role      Role     @default(USER)
-  isActive  Boolean  @default(true)
-  posts     Post[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(uuid()) @db.Uuid
 
+  // Basic Profile Info
+  firstName   String
+  lastName    String?
+  username    String?   @unique
+  email       String    @unique
+  password    String?   // Nullable for OAuth-only users
+  phone       String?   @unique
+  image       String?   // Profile / avatar image URL
+  bio         String?
+  gender      String?
+  dateOfBirth DateTime?
+
+  // Localization & Preferences
+  locale      String    @default("en")
+  timezone    String    @default("UTC")
+
+  // Authorization & Roles
+  role        UserRole  @default(CUSTOMER)
+
+  // Account Lifecycle & Status
+  isActive      Boolean   @default(true)
+  isDeactivated Boolean   @default(false)
+  deletedAt     DateTime? // Soft-delete support
+
+  // Verification Status
+  isEmailVerified        Boolean   @default(false)
+  emailVerifiedAt        DateTime?
+  emailVerificationToken String?
+
+  isPhoneVerified        Boolean   @default(false)
+  phoneVerifiedAt        DateTime?
+
+  // OAuth / Social Providers
+  provider      AuthProvider @default(LOCAL)
+  providerId    String?
+
+  // Security & Authentication Tracking
+  passwordChangedAt    DateTime?
+  failedLoginAttempts  Int       @default(0)
+  lockoutUntil         DateTime?
+  refreshTokenHash     String?
+
+  // Password Reset / OTP
+  resetOtpHash      String?
+  resetOtpExpiresAt DateTime?
+
+  // Session & Activity Auditing
+  lastLoginAt   DateTime?
+  lastLoginIp   String?
+
+  // Extensible Custom Metadata (Notification settings, preferences, app-specific flags)
+  metadata      Json?     @default("{}")
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([isActive])
+  @@index([isEmailVerified])
+  @@index([provider, providerId])
+  @@index([deletedAt])
   @@map("users")
-}
-
-model Post {
-  id        String   @id @default(uuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([authorId])
-  @@map("posts")
 }

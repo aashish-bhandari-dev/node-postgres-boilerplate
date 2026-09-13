@@ -1,6 +1,4 @@
 /**
- * Laravel-style Base API JsonResource
- *
  * Usage:
  * class UserResource extends JsonResource<User> {
  *   toArray() {
