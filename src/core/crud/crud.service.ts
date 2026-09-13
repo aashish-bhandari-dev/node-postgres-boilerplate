@@ -102,6 +102,20 @@ export class BaseCrudService<TModel = Record<string, unknown>> {
   }
 
   /**
+   * Apply Laravel-style JsonResource or custom transform if configured
+   */
+  protected transformItem(item: unknown): unknown {
+    if (!item) return item;
+    if (this.config.resource) {
+      return new this.config.resource(item).toArray();
+    }
+    if (this.config.transform) {
+      return this.config.transform(item);
+    }
+    return item;
+  }
+
+  /**
    * List records with pagination, search, filter, and sorting
    */
   async getAll(options: CrudQueryOptions = {}): Promise<PaginatedResult<TModel>> {
@@ -154,9 +168,10 @@ export class BaseCrudService<TModel = Record<string, unknown>> {
     ]);
 
     const totalPages = Math.ceil(total / limit);
+    const transformedItems = items.map((item) => this.transformItem(item)) as TModel[];
 
     return {
-      items: items as TModel[],
+      items: transformedItems,
       pagination: {
         total,
         page,
@@ -188,7 +203,7 @@ export class BaseCrudService<TModel = Record<string, unknown>> {
       throw ApiError.notFound(`${this.modelName} with ID '${rawId}' not found`);
     }
 
-    return record as TModel;
+    return this.transformItem(record) as TModel;
   }
 
   /**
@@ -210,7 +225,7 @@ export class BaseCrudService<TModel = Record<string, unknown>> {
     const created = await this.delegate.create(queryArgs);
     await this.afterCreate(created as TModel);
 
-    return created as TModel;
+    return this.transformItem(created) as TModel;
   }
 
   /**
@@ -237,7 +252,7 @@ export class BaseCrudService<TModel = Record<string, unknown>> {
     const updated = await this.delegate.update(queryArgs);
     await this.afterUpdate(updated as TModel);
 
-    return updated as TModel;
+    return this.transformItem(updated) as TModel;
   }
 
   /**

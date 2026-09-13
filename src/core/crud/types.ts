@@ -75,6 +75,18 @@ export interface CrudResourceConfig<TModel = Record<string, unknown>> {
    * Lifecycle hooks
    */
   hooks?: CrudHooks<TModel>;
+
+  /**
+   * Optional Laravel-style JsonResource class to format response data
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  resource?: new (item: any) => { toArray(): Record<string, unknown> };
+
+  /**
+   * Optional custom transformation function for response data
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transform?: (data: any) => Record<string, unknown>;
 }
 
 export type CrudHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;

@@ -55,7 +55,8 @@ app.get('/', (_req: Request, res: Response) => {
   });
 });
 
-// API version 1 routes
+// API routes (accessible via /api and versioned /api/v1)
+app.use('/api', apiRoutes);
 app.use('/api/v1', apiRoutes);
 
 // 404 Handler for undefined routes

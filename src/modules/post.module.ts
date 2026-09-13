@@ -1,25 +1,25 @@
 import { z } from 'zod';
-import { createCrudResource } from '../../core/crud';
+import { defineModule } from '../core/crud';
+import { PostResource } from '../resources/post.resource';
 
 /**
- * Auto-CRUD Resource for 'Post' Model
+ * Post Module
  *
  * Automatically generates:
- * - GET    /api/v1/admin/posts       (paginated list with search and sorting)
- * - GET    /api/v1/admin/posts/:id   (get single post with author)
- * - POST   /api/v1/admin/posts       (validated create)
- * - PATCH  /api/v1/admin/posts/:id   (validated update)
- * - DELETE /api/v1/admin/posts/:id   (delete post)
+ * - GET    /api/posts       (list with pagination, search, filter, sort)
+ * - GET    /api/posts/:id   (get single post with author)
+ * - POST   /api/posts       (create post with Zod validation)
+ * - PATCH  /api/posts/:id   (update post with Zod validation)
+ * - DELETE /api/posts/:id   (delete post by ID)
+ *
+ * Uses PostResource (Laravel-style) to format and shape JSON responses.
  */
-export const postAdminResource = createCrudResource({
+export const postModule = defineModule({
   model: 'post',
-  path: 'posts',
   searchableFields: ['title', 'content'],
   filterFields: ['published', 'authorId'],
-  defaultSort: {
-    field: 'createdAt',
-    order: 'desc',
-  },
+  defaultSort: { field: 'createdAt', order: 'desc' },
+  resource: PostResource,
   include: {
     author: {
       select: {

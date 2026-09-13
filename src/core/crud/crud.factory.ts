@@ -47,3 +47,12 @@ export function createCrudResource(options: CreateCrudResourceOptions): CrudReso
     router,
   };
 }
+
+export const defineResource = createCrudResource;
+export const defineModule = createCrudResource;
+export const defineCrud = createCrudResource;
+
+export type CrudModule = CrudResource;
+export type CreateCrudModuleOptions = CreateCrudResourceOptions;
+
+

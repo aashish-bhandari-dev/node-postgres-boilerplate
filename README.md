@@ -208,19 +208,19 @@ All responses follow a consistent, standardized envelope format:
 
 ---
 
-## ⚡ Zero-Boilerplate Auto-CRUD Engine (Admin CRUDs)
+## ⚡ Zero-Boilerplate Auto-CRUD Engine
 
-You don't need to rewrite repetitive controllers, services, routes, pagination, or search logic for standard admin CRUDs.
+You don't need to rewrite repetitive controllers, services, routes, pagination, or search logic for standard model CRUDs.
 
 ### 1. Pure Auto-CRUD (Zero Boilerplate)
 
-When you add a model to `prisma/schema.prisma` (e.g. `Post` or `Category`), create a resource file in `src/admin/resources/post.resource.ts`:
+When you add a model to `prisma/schema.prisma` (e.g. `User`, `Post`, `Product`), create a resource file in `src/resources/post.resource.ts`:
 
 ```typescript
 import { z } from 'zod';
-import { createCrudResource } from '../../core/crud';
+import { defineResource } from '../core/crud';
 
-export const postAdminResource = createCrudResource({
+export const postResource = defineResource({
   model: 'post', // Lowercase Prisma delegate name
   searchableFields: ['title', 'content'],
   filterFields: ['published', 'authorId'],
@@ -238,30 +238,31 @@ export const postAdminResource = createCrudResource({
 });
 ```
 
-Then register it in `src/admin/registry.ts`:
+Then register it in `src/resources/index.ts`:
 
 ```typescript
-import { postAdminResource } from './resources/post.resource';
+import { userResource } from './user.resource';
+import { postResource } from './post.resource';
 
-export const adminResources = [
-  postAdminResource,
-  // ... other resources
+export const resources = [
+  userResource,
+  postResource,
 ];
 ```
 
-**That's it!** You immediately get 5 full RESTful endpoints:
-- `GET    /api/v1/admin/posts` (with `?page=1&limit=10&search=keyword&sortBy=title&sortOrder=asc`)
-- `GET    /api/v1/admin/posts/:id`
-- `POST   /api/v1/admin/posts` (with Zod validation)
-- `PATCH  /api/v1/admin/posts/:id` (with Zod validation)
-- `DELETE /api/v1/admin/posts/:id`
+**That's it!** You immediately get 5 full RESTful endpoints at both `/api/posts` and `/api/v1/posts`:
+- `GET    /api/posts` (with `?page=1&limit=10&search=keyword&sortBy=title&sortOrder=asc`)
+- `GET    /api/posts/:id`
+- `POST   /api/posts` (with Zod validation)
+- `PATCH  /api/posts/:id` (with Zod validation)
+- `DELETE /api/posts/:id`
 
 ### 2. Overriding and Customizing Methods
 
-Whenever you need custom business logic (e.g., sanitizing input, custom authorization, extra endpoints):
+Whenever you need custom business logic (e.g., password hashing, sanitizing input, custom authorization, extra endpoints), you can pass custom hooks or extend `BaseCrudService` / `BaseCrudController`:
 
 ```typescript
-import { BaseCrudService, BaseCrudController, createCrudResource } from '../../core/crud';
+import { BaseCrudService, BaseCrudController, defineResource } from '../core/crud';
 
 // 1. Override Service methods or lifecycle hooks
 export class CustomUserService extends BaseCrudService {
@@ -295,12 +296,12 @@ export class CustomUserController extends BaseCrudController<CustomUserService> 
 const customService = new CustomUserService('user');
 const customController = new CustomUserController(customService);
 
-export const userAdminResource = createCrudResource({
+export const userResource = defineResource({
   model: 'user',
   service: customService,
   controller: customController,
   extendRouter: (router) => {
-    // Mount custom sub-endpoint: PATCH /api/v1/admin/users/:id/toggle-status
+    // Mount custom sub-endpoint: PATCH /api/users/:id/toggle-status
     router.patch('/:id/toggle-status', customController.toggleActive.bind(customController));
   },
 });
