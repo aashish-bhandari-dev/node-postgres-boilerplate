@@ -34,6 +34,19 @@ const envSchema = z.object({
   AUTH_LOCKOUT_DURATION_MINUTES: z.coerce.number().default(15),
   AUTH_EMAIL_TOKEN_EXPIRES_HOURS: z.coerce.number().default(24),
   AUTH_OTP_EXPIRES_MINUTES: z.coerce.number().default(10),
+
+  // Email & SMTP Configuration
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_SECURE: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(false),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM_NAME: z.string().default('Node Boilerplate'),
+  EMAIL_FROM_ADDRESS: z.string().email().default('noreply@example.com'),
+  EMAIL_VERIFICATION_TYPE: z.enum(['otp', 'link']).default('otp'),
+  EMAIL_OTP_EXPIRES_MINUTES: z.coerce.number().default(10),
 });
 
 const parseEnv = () => {

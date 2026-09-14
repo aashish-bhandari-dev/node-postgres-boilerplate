@@ -1,4 +1,4 @@
-import { UserRole, AuthProvider } from '@prisma/client';
+import { UserRole, AuthProvider, Prisma } from '@prisma/client';
 import { prisma } from '../config/db';
 import { env } from '../config/env';
 import { ApiError } from '../utils/apiError';
@@ -13,6 +13,7 @@ import {
   verifyRefreshToken,
 } from '../utils/token.util';
 import { UserResource } from '../resources/user.resource';
+import { mailService } from './mail.service';
 import {
   RegisterInput,
   LoginInput,
@@ -58,7 +59,14 @@ export class AuthService {
     }
 
     const hashedPassword = await hashPassword(input.password);
-    const verificationToken = generateRandomToken(32);
+
+    // Support both 6-digit numeric OTP and 32-byte link token
+    const isOtpMode = env.EMAIL_VERIFICATION_TYPE === 'otp';
+    const rawVerificationCode = isOtpMode ? generateNumericOtp(6) : generateRandomToken(32);
+    const storedVerificationToken = isOtpMode ? hashToken(rawVerificationCode) : rawVerificationCode;
+    const emailOtpExpiresAt = isOtpMode
+      ? new Date(Date.now() + env.EMAIL_OTP_EXPIRES_MINUTES * 60 * 1000).toISOString()
+      : null;
 
     const user = await prisma.user.create({
       data: {
@@ -73,15 +81,29 @@ export class AuthService {
         role: UserRole.CUSTOMER,
         provider: AuthProvider.LOCAL,
         isEmailVerified: false,
-        emailVerificationToken: verificationToken,
+        emailVerificationToken: storedVerificationToken,
         isPhoneVerified: false,
         isActive: true,
         isDeactivated: false,
+        metadata: emailOtpExpiresAt ? { emailOtpExpiresAt } : {},
       },
     });
 
     logger.info(`[Auth] Registered new user: ${user.email} (ID: ${user.id})`);
-    logger.info(`[Auth] Email verification token generated for ${user.email}: ${verificationToken}`);
+
+    // Dispatch verification email asynchronously
+    if (isOtpMode) {
+      logger.info(`[Auth] Verification OTP for ${user.email}: ${rawVerificationCode}`);
+      mailService
+        .sendEmailVerificationOtp(user.email, user.firstName, rawVerificationCode)
+        .catch((err) => logger.error('[Auth] Error sending verification email OTP:', err));
+    } else {
+      const verifyUrl = `http://${env.HOST}:${env.PORT}/api/v1/auth/verify-email?token=${rawVerificationCode}`;
+      logger.info(`[Auth] Verification Link for ${user.email}: ${verifyUrl}`);
+      mailService
+        .sendEmailVerificationLink(user.email, user.firstName, verifyUrl)
+        .catch((err) => logger.error('[Auth] Error sending verification link email:', err));
+    }
 
     // If global toggle requires email verification, do not issue tokens until verified
     if (env.AUTH_REQUIRE_EMAIL_VERIFICATION) {
@@ -326,38 +348,157 @@ export class AuthService {
   }
 
   /**
-   * Resend email verification token.
+   * Resend email verification (OTP or link depending on configuration).
    */
-  async resendVerificationEmail(email: string): Promise<{ message: string; token?: string }> {
+  async resendVerificationEmail(email: string): Promise<{ message: string; token?: string; otp?: string }> {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
 
-    // To prevent email enumeration, return a generic message if user doesn't exist
     if (!user || user.deletedAt) {
-      return { message: 'If that email address is registered, a verification link has been sent.' };
+      return { message: 'If that email address is registered, verification instructions have been sent.' };
     }
 
     if (user.isEmailVerified) {
       throw ApiError.badRequest('This email address is already verified.');
     }
 
-    const newToken = generateRandomToken(32);
+    const isOtpMode = env.EMAIL_VERIFICATION_TYPE === 'otp';
+    const rawCodeOrToken = isOtpMode ? generateNumericOtp(6) : generateRandomToken(32);
+    const storedToken = isOtpMode ? hashToken(rawCodeOrToken) : rawCodeOrToken;
+    const emailOtpExpiresAt = isOtpMode
+      ? new Date(Date.now() + env.EMAIL_OTP_EXPIRES_MINUTES * 60 * 1000).toISOString()
+      : null;
+
+    const existingMetadata = (user.metadata as Record<string, unknown>) || {};
+    const newMetadata = emailOtpExpiresAt
+      ? { ...existingMetadata, emailOtpExpiresAt }
+      : existingMetadata;
+
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        emailVerificationToken: newToken,
+        emailVerificationToken: storedToken,
+        metadata: newMetadata as Prisma.InputJsonValue,
       },
     });
 
-    logger.info(`[Auth] Resent verification token for ${user.email}: ${newToken}`);
+    if (isOtpMode) {
+      logger.info(`[Auth] Resent verification OTP for ${user.email}: ${rawCodeOrToken}`);
+      mailService
+        .sendEmailVerificationOtp(user.email, user.firstName, rawCodeOrToken)
+        .catch((err) => logger.error('[Auth] Error sending verification OTP email:', err));
 
-    // In development mode, return the token for quick developer testing
+      return {
+        message: 'A verification code has been sent to your email address.',
+        ...(env.NODE_ENV === 'development' && { otp: rawCodeOrToken }),
+      };
+    } else {
+      const verifyUrl = `http://${env.HOST}:${env.PORT}/api/v1/auth/verify-email?token=${rawCodeOrToken}`;
+      logger.info(`[Auth] Resent verification link for ${user.email}: ${verifyUrl}`);
+      mailService
+        .sendEmailVerificationLink(user.email, user.firstName, verifyUrl)
+        .catch((err) => logger.error('[Auth] Error sending verification link email:', err));
+
+      return {
+        message: 'A verification link has been sent to your email address.',
+        ...(env.NODE_ENV === 'development' && { token: rawCodeOrToken }),
+      };
+    }
+  }
+
+  /**
+   * Send a fresh 6-digit OTP specifically for email verification.
+   */
+  async sendEmailOtp(email: string): Promise<{ message: string; otp?: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user || user.deletedAt) {
+      return { message: 'If that email address is registered, a verification code has been sent.' };
+    }
+
+    if (user.isEmailVerified) {
+      throw ApiError.badRequest('This email address is already verified.');
+    }
+
+    const otp = generateNumericOtp(6);
+    const expiresAt = new Date(Date.now() + env.EMAIL_OTP_EXPIRES_MINUTES * 60 * 1000).toISOString();
+    const existingMetadata = (user.metadata as Record<string, unknown>) || {};
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationToken: hashToken(otp),
+        metadata: {
+          ...existingMetadata,
+          emailOtpExpiresAt: expiresAt,
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    logger.info(`[Auth] Sent email verification OTP to ${user.email}: ${otp}`);
+
+    mailService
+      .sendEmailVerificationOtp(user.email, user.firstName, otp)
+      .catch((err) => logger.error('[Auth] Failed to send email OTP:', err));
+
     return {
-      message: 'If that email address is registered, a verification link has been sent.',
-      ...(env.NODE_ENV === 'development' && { token: newToken }),
+      message: 'Verification code sent to your email address.',
+      ...(env.NODE_ENV === 'development' && { otp }),
     };
+  }
+
+  /**
+   * Verify email address using 6-digit numeric OTP code.
+   */
+  async verifyEmailOtp(email: string, otp: string): Promise<Record<string, unknown>> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user || user.deletedAt || !user.emailVerificationToken) {
+      throw ApiError.badRequest('No pending verification found or code is invalid.');
+    }
+
+    if (user.isEmailVerified) {
+      throw ApiError.badRequest('This email address is already verified.');
+    }
+
+    // Check expiration if stored in metadata
+    const userMetadata = (user.metadata as Record<string, unknown>) || {};
+    if (userMetadata.emailOtpExpiresAt) {
+      const expiresAt = new Date(userMetadata.emailOtpExpiresAt as string);
+      if (expiresAt < new Date()) {
+        throw ApiError.badRequest('Verification code has expired. Please request a new one.');
+      }
+    }
+
+    // Check hashed OTP
+    const hashedOtp = hashToken(otp);
+    if (user.emailVerificationToken !== hashedOtp) {
+      throw ApiError.badRequest('Invalid verification code.');
+    }
+
+    const { emailOtpExpiresAt: _, ...cleanedMetadata } = userMetadata;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isEmailVerified: true,
+        emailVerifiedAt: new Date(),
+        emailVerificationToken: null,
+        metadata: cleanedMetadata as Prisma.InputJsonValue,
+      },
+    });
+
+    logger.info(`[Auth] Email verified via OTP for: ${user.email}`);
+
+    return new UserResource(updatedUser).toJSON();
   }
 
   /**
@@ -447,22 +588,28 @@ export class AuthService {
       return { message: 'If an account exists with that email, password reset instructions have been sent.' };
     }
 
-    const resetToken = generateRandomToken(32);
+    // Generate 6-digit numeric OTP or token for reset
+    const resetCode = generateNumericOtp(6);
     const expiresAt = new Date(Date.now() + env.AUTH_OTP_EXPIRES_MINUTES * 60 * 1000);
 
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        resetOtpHash: hashToken(resetToken),
+        resetOtpHash: hashToken(resetCode),
         resetOtpExpiresAt: expiresAt,
       },
     });
 
-    logger.info(`[Auth] Password reset token for ${email}: ${resetToken}`);
+    logger.info(`[Auth] Password reset OTP for ${email}: ${resetCode}`);
+
+    // Send email with reset code
+    mailService
+      .sendPasswordReset(user.email, user.firstName, resetCode, env.AUTH_OTP_EXPIRES_MINUTES)
+      .catch((err) => logger.error('[Auth] Failed to send password reset email:', err));
 
     return {
       message: 'If an account exists with that email, password reset instructions have been sent.',
-      ...(env.NODE_ENV === 'development' && { resetToken }),
+      ...(env.NODE_ENV === 'development' && { resetToken: resetCode }),
     };
   }
 

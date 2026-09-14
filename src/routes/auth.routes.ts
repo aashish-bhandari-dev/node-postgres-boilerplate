@@ -8,6 +8,8 @@ import {
   refreshTokenSchema,
   verifyEmailSchema,
   resendVerificationEmailSchema,
+  sendEmailOtpSchema,
+  verifyEmailOtpSchema,
   sendPhoneOtpSchema,
   verifyPhoneSchema,
   forgotPasswordSchema,
@@ -163,6 +165,61 @@ router.post(
   '/resend-verification-email',
   validateRequest(resendVerificationEmailSchema),
   authController.resendVerificationEmail,
+);
+
+/**
+ * @openapi
+ * /api/v1/auth/send-email-otp:
+ *   post:
+ *     summary: Send a 6-digit verification OTP code to user's email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, format: email, example: 'user@example.com' }
+ *     responses:
+ *       200:
+ *         description: Verification OTP code sent to email
+ *       400:
+ *         description: Email is already verified
+ */
+router.post(
+  '/send-email-otp',
+  validateRequest(sendEmailOtpSchema),
+  authController.sendEmailOtp,
+);
+
+/**
+ * @openapi
+ * /api/v1/auth/verify-email-otp:
+ *   post:
+ *     summary: Verify email address using the 6-digit numeric OTP code
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, otp]
+ *             properties:
+ *               email: { type: string, format: email, example: 'user@example.com' }
+ *               otp: { type: string, example: '123456', description: '6-digit numeric OTP' }
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *       400:
+ *         description: Invalid or expired OTP code
+ */
+router.post(
+  '/verify-email-otp',
+  validateRequest(verifyEmailOtpSchema),
+  authController.verifyEmailOtp,
 );
 
 /**

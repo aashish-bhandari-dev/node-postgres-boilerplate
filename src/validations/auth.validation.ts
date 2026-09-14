@@ -58,6 +58,26 @@ export const resendVerificationEmailSchema = z.object({
   }),
 });
 
+export const sendEmailOtpSchema = z.object({
+  body: z.object({
+    email: z
+      .string({ required_error: 'Email is required' })
+      .email('Invalid email address'),
+  }),
+});
+
+export const verifyEmailOtpSchema = z.object({
+  body: z.object({
+    email: z
+      .string({ required_error: 'Email is required' })
+      .email('Invalid email address'),
+    otp: z
+      .string({ required_error: 'OTP code is required' })
+      .length(6, 'OTP must be exactly 6 digits')
+      .regex(/^[0-9]+$/, 'OTP must be numeric'),
+  }),
+});
+
 export const sendPhoneOtpSchema = z.object({
   body: z.object({
     phone: z
@@ -140,6 +160,8 @@ export type LoginInput = z.infer<typeof loginSchema>['body'];
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>['body'];
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>['body'];
 export type ResendVerificationEmailInput = z.infer<typeof resendVerificationEmailSchema>['body'];
+export type SendEmailOtpInput = z.infer<typeof sendEmailOtpSchema>['body'];
+export type VerifyEmailOtpInput = z.infer<typeof verifyEmailOtpSchema>['body'];
 export type SendPhoneOtpInput = z.infer<typeof sendPhoneOtpSchema>['body'];
 export type VerifyPhoneInput = z.infer<typeof verifyPhoneSchema>['body'];
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>['body'];

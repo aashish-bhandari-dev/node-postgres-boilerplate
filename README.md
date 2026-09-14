@@ -149,8 +149,10 @@ The server will start at:
 | `POST` | `/api/v1/auth/login` | Log in via email, username, or phone + password | No |
 | `POST` | `/api/v1/auth/refresh-token` | Rotate JWT access and refresh token pair | No |
 | `POST` | `/api/v1/auth/logout` | Invalidate current refresh token | **Yes (Bearer)** |
-| `POST` | `/api/v1/auth/verify-email` | Verify email address using token | No |
-| `POST` | `/api/v1/auth/resend-verification-email` | Resend email verification token | No |
+| `POST` | `/api/v1/auth/verify-email` | Verify email address using token link | No |
+| `POST` | `/api/v1/auth/resend-verification-email` | Resend email verification token / code | No |
+| `POST` | `/api/v1/auth/send-email-otp` | Send 6-digit verification OTP code to email | No |
+| `POST` | `/api/v1/auth/verify-email-otp` | Verify email using 6-digit numeric OTP | No |
 | `POST` | `/api/v1/auth/send-phone-otp` | Send 6-digit verification OTP to phone | No |
 | `POST` | `/api/v1/auth/verify-phone` | Verify phone number using 6-digit OTP | No |
 | `POST` | `/api/v1/auth/forgot-password` | Request password reset token / OTP | No |

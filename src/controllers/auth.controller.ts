@@ -81,6 +81,30 @@ export class AuthController {
   }
 
   /**
+   * Send 6-digit verification code to email
+   */
+  async sendEmailOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await authService.sendEmailOtp(req.body.email);
+      ApiResponse.success(res, result.message, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Verify email address using 6-digit numeric OTP code
+   */
+  async verifyEmailOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = await authService.verifyEmailOtp(req.body.email, req.body.otp);
+      ApiResponse.success(res, 'Email address verified successfully', { user });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Send phone verification OTP
    */
   async sendPhoneOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
