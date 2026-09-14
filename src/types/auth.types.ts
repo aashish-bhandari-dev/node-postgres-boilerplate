@@ -42,4 +42,5 @@ export interface AuthResponseData {
     email: boolean;
     phone: boolean;
   };
+  otp?: string;
 }

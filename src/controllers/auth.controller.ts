@@ -97,8 +97,8 @@ export class AuthController {
    */
   async verifyEmailOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = await authService.verifyEmailOtp(req.body.email, req.body.otp);
-      ApiResponse.success(res, 'Email address verified successfully', { user });
+      const result = await authService.verifyEmailOtp(req.body.email, req.body.otp);
+      ApiResponse.success(res, 'Email address verified successfully', result);
     } catch (error) {
       next(error);
     }

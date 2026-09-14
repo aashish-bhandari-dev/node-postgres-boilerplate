@@ -113,6 +113,7 @@ export class AuthService {
           email: true,
           phone: env.AUTH_REQUIRE_PHONE_VERIFICATION,
         },
+        ...(env.NODE_ENV === 'development' && isOtpMode && { otp: rawVerificationCode }),
       };
     }
 
@@ -223,10 +224,42 @@ export class AuthService {
 
     // Check flexible email verification toggle
     if (env.AUTH_REQUIRE_EMAIL_VERIFICATION && !user.isEmailVerified) {
+      // Automatically generate fresh 6-digit verification OTP
+      const otp = generateNumericOtp(6);
+      const expiresAt = new Date(
+        Date.now() + env.EMAIL_OTP_EXPIRES_MINUTES * 60 * 1000,
+      ).toISOString();
+      const existingMetadata = (user.metadata as Record<string, unknown>) || {};
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerificationToken: hashToken(otp),
+          metadata: {
+            ...existingMetadata,
+            emailOtpExpiresAt: expiresAt,
+          } as Prisma.InputJsonValue,
+        },
+      });
+
+      logger.info(`[Auth] User ${user.email} attempted login with unverified email. Dispatched fresh OTP: ${otp}`);
+
+      // Send OTP to email
+      mailService
+        .sendEmailVerificationOtp(user.email, user.firstName, otp)
+        .catch((err) => logger.error('[Auth] Failed to send email verification OTP on login:', err));
+
       throw new ApiError(
         HttpStatus.FORBIDDEN,
-        'Email verification is required before you can log in. Please check your inbox.',
-        [{ code: 'EMAIL_NOT_VERIFIED', email: user.email }],
+        'Email is not verified. A verification code has been sent to your email address.',
+        [
+          {
+            code: 'EMAIL_NOT_VERIFIED',
+            email: user.email,
+            message: 'Please verify your email using the OTP code sent to your inbox.',
+            ...(env.NODE_ENV === 'development' && { otp }),
+          },
+        ],
       );
     }
 
@@ -486,6 +519,13 @@ export class AuthService {
 
     const { emailOtpExpiresAt: _, ...cleanedMetadata } = userMetadata;
 
+    // Issue auth tokens so user is immediately logged in upon OTP verification!
+    const tokens = generateAuthTokens({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -493,12 +533,16 @@ export class AuthService {
         emailVerifiedAt: new Date(),
         emailVerificationToken: null,
         metadata: cleanedMetadata as Prisma.InputJsonValue,
+        refreshTokenHash: hashToken(tokens.refreshToken),
       },
     });
 
     logger.info(`[Auth] Email verified via OTP for: ${user.email}`);
 
-    return new UserResource(updatedUser).toJSON();
+    return {
+      user: new UserResource(updatedUser).toJSON(),
+      tokens,
+    };
   }
 
   /**
