@@ -38,3 +38,11 @@ dist/
 
 # Prisma
 prisma/migrations
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
