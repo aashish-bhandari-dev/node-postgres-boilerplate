@@ -12,9 +12,14 @@ export interface BlueprintQueryOptions {
 }
 
 export interface BlueprintHooks<T = Record<string, unknown>> {
-  beforeCreate?: (data: Record<string, unknown>) => Promise<Record<string, unknown>> | Record<string, unknown>;
+  beforeCreate?: (
+    data: Record<string, unknown>,
+  ) => Promise<Record<string, unknown>> | Record<string, unknown>;
   afterCreate?: (result: T) => Promise<void> | void;
-  beforeUpdate?: (id: string | number, data: Record<string, unknown>) => Promise<Record<string, unknown>> | Record<string, unknown>;
+  beforeUpdate?: (
+    id: string | number,
+    data: Record<string, unknown>,
+  ) => Promise<Record<string, unknown>> | Record<string, unknown>;
   afterUpdate?: (result: T) => Promise<void> | void;
   beforeDelete?: (id: string | number) => Promise<void> | void;
   afterDelete?: (result: T) => Promise<void> | void;
@@ -90,10 +95,15 @@ export interface BlueprintConfig<TModel = Record<string, unknown>> {
   transform?: (data: any) => Record<string, unknown>;
 }
 
-export type BlueprintHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export type BlueprintHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<void>;
 
 // Aliases for backwards compatibility
 export type CrudQueryOptions = BlueprintQueryOptions;
 export type CrudHooks<T = Record<string, unknown>> = BlueprintHooks<T>;
-export type CrudResourceConfig<TModel = Record<string, unknown>> = BlueprintConfig<TModel>;
+export type CrudResourceConfig<TModel = Record<string, unknown>> =
+  BlueprintConfig<TModel>;
 export type CrudHandler = BlueprintHandler;

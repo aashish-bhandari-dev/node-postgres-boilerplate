@@ -3,7 +3,9 @@ import { BaseBlueprintService } from './blueprint.service';
 import { ApiResponse } from '../../utils/apiResponse';
 import { BlueprintQueryOptions } from './types';
 
-export class BaseBlueprintController<TService extends BaseBlueprintService = BaseBlueprintService> {
+export class BaseBlueprintController<
+  TService extends BaseBlueprintService = BaseBlueprintService,
+> {
   protected readonly service: TService;
 
   constructor(service: TService) {
@@ -20,7 +22,9 @@ export class BaseBlueprintController<TService extends BaseBlueprintService = Bas
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const host = req.get('host');
-      const baseUrl = host ? `${req.protocol}://${host}${req.originalUrl}` : req.originalUrl;
+      const baseUrl = host
+        ? `${req.protocol}://${host}${req.originalUrl}`
+        : req.originalUrl;
 
       const queryOptions: BlueprintQueryOptions = {
         page: req.query.page ? Number(req.query.page) : undefined,
@@ -33,7 +37,12 @@ export class BaseBlueprintController<TService extends BaseBlueprintService = Bas
       };
 
       const result = await this.service.getAll(queryOptions);
-      ApiResponse.success(res, 'Records retrieved successfully', result.items, result.pagination);
+      ApiResponse.success(
+        res,
+        'Records retrieved successfully',
+        result.items,
+        result.pagination,
+      );
     } catch (error) {
       next(error);
     }
@@ -78,4 +87,6 @@ export class BaseBlueprintController<TService extends BaseBlueprintService = Bas
 
 // Alias for backwards compatibility
 export const BaseCrudController = BaseBlueprintController;
-export type BaseCrudController<TService extends BaseBlueprintService = BaseBlueprintService> = BaseBlueprintController<TService>;
+export type BaseCrudController<
+  TService extends BaseBlueprintService = BaseBlueprintService,
+> = BaseBlueprintController<TService>;

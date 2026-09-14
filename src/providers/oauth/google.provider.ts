@@ -1,5 +1,9 @@
 import { AuthProvider } from '@prisma/client';
-import { IOAuthProvider, OAuthPayloadInput, OAuthUserProfile } from '../../types/oauth.types';
+import {
+  IOAuthProvider,
+  OAuthPayloadInput,
+  OAuthUserProfile,
+} from '../../types/oauth.types';
 import { env } from '../../config/env';
 import { ApiError } from '../../utils/apiError';
 import { logger } from '../../utils/logger';
@@ -32,7 +36,9 @@ export class GoogleOAuthProvider implements IOAuthProvider {
       return this.exchangeCode(payload.code, payload.redirectUri);
     }
 
-    throw ApiError.badRequest('Google authentication requires an idToken or authorization code.');
+    throw ApiError.badRequest(
+      'Google authentication requires an idToken or authorization code.',
+    );
   }
 
   private async verifyIdToken(idToken: string): Promise<OAuthUserProfile> {
@@ -53,12 +59,17 @@ export class GoogleOAuthProvider implements IOAuthProvider {
 
       // If client ID is configured in env, ensure audience matches
       if (env.GOOGLE_CLIENT_ID && data.aud && data.aud !== env.GOOGLE_CLIENT_ID) {
-        throw new Error(`Google token audience mismatch. Expected: ${env.GOOGLE_CLIENT_ID}, received: ${data.aud}`);
+        throw new Error(
+          `Google token audience mismatch. Expected: ${env.GOOGLE_CLIENT_ID}, received: ${data.aud}`,
+        );
       }
 
-      const isEmailVerified = data.email_verified === 'true' || data.email_verified === true;
-      const firstName = data.given_name || data.name?.split(' ')[0] || data.email.split('@')[0];
-      const lastName = data.family_name || (data.name?.split(' ').slice(1).join(' ') || null);
+      const isEmailVerified =
+        data.email_verified === 'true' || data.email_verified === true;
+      const firstName =
+        data.given_name || data.name?.split(' ')[0] || data.email.split('@')[0];
+      const lastName =
+        data.family_name || data.name?.split(' ').slice(1).join(' ') || null;
 
       return {
         provider: this.provider,
@@ -76,9 +87,14 @@ export class GoogleOAuthProvider implements IOAuthProvider {
     }
   }
 
-  private async exchangeCode(code: string, redirectUri?: string): Promise<OAuthUserProfile> {
+  private async exchangeCode(
+    code: string,
+    redirectUri?: string,
+  ): Promise<OAuthUserProfile> {
     if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
-      throw ApiError.internal('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set for code exchange.');
+      throw ApiError.internal(
+        'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set for code exchange.',
+      );
     }
 
     try {
@@ -89,7 +105,9 @@ export class GoogleOAuthProvider implements IOAuthProvider {
           code,
           client_id: env.GOOGLE_CLIENT_ID,
           client_secret: env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: redirectUri || `http://${env.HOST}:${env.PORT}/api/v1/auth/oauth/google/callback`,
+          redirect_uri:
+            redirectUri ||
+            `http://${env.HOST}:${env.PORT}/api/v1/auth/oauth/google/callback`,
           grant_type: 'authorization_code',
         }),
       });
@@ -98,7 +116,10 @@ export class GoogleOAuthProvider implements IOAuthProvider {
         throw new Error('Google token exchange failed');
       }
 
-      const tokens = (await tokenResponse.json()) as { id_token?: string; access_token?: string };
+      const tokens = (await tokenResponse.json()) as {
+        id_token?: string;
+        access_token?: string;
+      };
       if (!tokens.id_token) {
         throw new Error('No id_token returned from Google code exchange');
       }

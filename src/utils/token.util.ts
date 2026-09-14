@@ -1,11 +1,7 @@
 import crypto from 'crypto';
 import jwt, { SignOptions, Secret } from 'jsonwebtoken';
 import { env } from '../config/env';
-import {
-  AccessTokenPayload,
-  RefreshTokenPayload,
-  AuthTokens,
-} from '../types/auth.types';
+import { AccessTokenPayload, RefreshTokenPayload, AuthTokens } from '../types/auth.types';
 
 /**
  * Generate a cryptographically secure random hex string token (e.g. for email verification).
@@ -71,9 +67,7 @@ export function verifyRefreshToken(token: string): RefreshTokenPayload {
 /**
  * Generate an access and refresh token pair along with metadata.
  */
-export function generateAuthTokens(
-  userPayload: AccessTokenPayload,
-): AuthTokens {
+export function generateAuthTokens(userPayload: AccessTokenPayload): AuthTokens {
   const accessToken = generateAccessToken(userPayload);
   const refreshToken = generateRefreshToken({ userId: userPayload.userId });
 

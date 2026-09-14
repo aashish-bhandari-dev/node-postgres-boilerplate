@@ -25,9 +25,13 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
    * Retrieves the dynamic Prisma delegate for this model
    */
   protected get delegate(): GenericPrismaDelegate {
-    const delegate = (prisma as unknown as Record<string, GenericPrismaDelegate>)[this.modelName];
+    const delegate = (prisma as unknown as Record<string, GenericPrismaDelegate>)[
+      this.modelName
+    ];
     if (!delegate) {
-      throw ApiError.internal(`Prisma delegate for model '${this.modelName}' was not found`);
+      throw ApiError.internal(
+        `Prisma delegate for model '${this.modelName}' was not found`,
+      );
     }
     return delegate;
   }
@@ -174,7 +178,9 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
     const hasPrevPage = page > 1 && (totalPages === 0 || page <= totalPages + 1);
 
     const buildUrl = (targetPage: number): string => {
-      const defaultPath = this.config.path ? `/${this.config.path}` : `/${this.modelName}s`;
+      const defaultPath = this.config.path
+        ? `/${this.config.path}`
+        : `/${this.modelName}s`;
       const base = options.baseUrl || defaultPath;
       try {
         const dummyBase = 'http://localhost';
@@ -303,4 +309,5 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
 
 // Alias for backwards compatibility
 export const BaseCrudService = BaseBlueprintService;
-export type BaseCrudService<TModel = Record<string, unknown>> = BaseBlueprintService<TModel>;
+export type BaseCrudService<TModel = Record<string, unknown>> =
+  BaseBlueprintService<TModel>;

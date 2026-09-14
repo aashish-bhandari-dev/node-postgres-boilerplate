@@ -25,12 +25,9 @@ export const oauthLoginSchema = z.object({
         })
         .optional(),
     })
-    .refine(
-      (data) => !!(data.token || data.idToken || data.accessToken || data.code),
-      {
-        message: 'Must provide an idToken, accessToken, token, or authorization code.',
-      },
-    ),
+    .refine((data) => !!(data.token || data.idToken || data.accessToken || data.code), {
+      message: 'Must provide an idToken, accessToken, token, or authorization code.',
+    }),
 });
 
 export type OAuthLoginParams = z.infer<typeof oauthLoginSchema>['params'];

@@ -26,8 +26,7 @@ export class SmtpMailTransport implements IMailTransport {
   }
 
   async sendMail(options: SendMailOptions): Promise<MailSendResult> {
-    const from =
-      options.from || `"${env.EMAIL_FROM_NAME}" <${env.EMAIL_FROM_ADDRESS}>`;
+    const from = options.from || `"${env.EMAIL_FROM_NAME}" <${env.EMAIL_FROM_ADDRESS}>`;
 
     const info = await this.transporter.sendMail({
       from,
@@ -81,7 +80,9 @@ export class ConsoleMailTransport implements IMailTransport {
  */
 export function createMailTransport(): IMailTransport {
   if (env.SMTP_HOST && env.SMTP_HOST.trim().length > 0) {
-    logger.info(`[Mail] Initialized SMTP transport with host: ${env.SMTP_HOST}:${env.SMTP_PORT}`);
+    logger.info(
+      `[Mail] Initialized SMTP transport with host: ${env.SMTP_HOST}:${env.SMTP_PORT}`,
+    );
     return new SmtpMailTransport();
   }
 

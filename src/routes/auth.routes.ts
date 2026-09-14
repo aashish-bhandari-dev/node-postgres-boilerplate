@@ -103,7 +103,11 @@ router.post('/login', validateRequest(loginSchema), authController.login);
  *       401:
  *         description: Invalid or expired refresh token
  */
-router.post('/refresh-token', validateRequest(refreshTokenSchema), authController.refreshToken);
+router.post(
+  '/refresh-token',
+  validateRequest(refreshTokenSchema),
+  authController.refreshToken,
+);
 
 /**
  * @openapi
@@ -142,7 +146,11 @@ router.post('/logout', authenticate(), authController.logout);
  *       400:
  *         description: Invalid or expired token
  */
-router.post('/verify-email', validateRequest(verifyEmailSchema), authController.verifyEmail);
+router.post(
+  '/verify-email',
+  validateRequest(verifyEmailSchema),
+  authController.verifyEmail,
+);
 
 /**
  * @openapi
@@ -245,7 +253,11 @@ router.post(
  *       404:
  *         description: Phone number not found
  */
-router.post('/send-phone-otp', validateRequest(sendPhoneOtpSchema), authController.sendPhoneOtp);
+router.post(
+  '/send-phone-otp',
+  validateRequest(sendPhoneOtpSchema),
+  authController.sendPhoneOtp,
+);
 
 /**
  * @openapi
@@ -269,7 +281,11 @@ router.post('/send-phone-otp', validateRequest(sendPhoneOtpSchema), authControll
  *       400:
  *         description: Invalid or expired OTP
  */
-router.post('/verify-phone', validateRequest(verifyPhoneSchema), authController.verifyPhone);
+router.post(
+  '/verify-phone',
+  validateRequest(verifyPhoneSchema),
+  authController.verifyPhone,
+);
 
 /**
  * @openapi
@@ -290,7 +306,11 @@ router.post('/verify-phone', validateRequest(verifyPhoneSchema), authController.
  *       200:
  *         description: Password reset instructions sent
  */
-router.post('/forgot-password', validateRequest(forgotPasswordSchema), authController.forgotPassword);
+router.post(
+  '/forgot-password',
+  validateRequest(forgotPasswordSchema),
+  authController.forgotPassword,
+);
 
 /**
  * @openapi
@@ -315,7 +335,11 @@ router.post('/forgot-password', validateRequest(forgotPasswordSchema), authContr
  *       400:
  *         description: Invalid or expired token
  */
-router.post('/reset-password', validateRequest(resetPasswordSchema), authController.resetPassword);
+router.post(
+  '/reset-password',
+  validateRequest(resetPasswordSchema),
+  authController.resetPassword,
+);
 
 /**
  * @openapi

@@ -39,7 +39,9 @@ export class UserResource extends JsonResource<UserResourceData> {
       id: this.resource.id,
       firstName: this.resource.firstName,
       lastName: this.resource.lastName ?? null,
-      fullName: [this.resource.firstName, this.resource.lastName].filter(Boolean).join(' '),
+      fullName: [this.resource.firstName, this.resource.lastName]
+        .filter(Boolean)
+        .join(' '),
       username: this.resource.username ?? null,
       email: this.resource.email,
       phone: this.resource.phone ?? null,

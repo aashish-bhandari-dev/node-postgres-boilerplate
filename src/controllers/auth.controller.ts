@@ -71,7 +71,11 @@ export class AuthController {
   /**
    * Resend verification email
    */
-  async resendVerificationEmail(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async resendVerificationEmail(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const result = await authService.resendVerificationEmail(req.body.email);
       ApiResponse.success(res, result.message, result);
@@ -146,7 +150,10 @@ export class AuthController {
   async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       await authService.resetPassword(req.body);
-      ApiResponse.success(res, 'Password has been reset successfully. Please log in with your new password.');
+      ApiResponse.success(
+        res,
+        'Password has been reset successfully. Please log in with your new password.',
+      );
     } catch (error) {
       next(error);
     }

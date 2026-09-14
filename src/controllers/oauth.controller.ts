@@ -11,11 +11,7 @@ export class OAuthController {
       const clientIp = req.ip || req.socket.remoteAddress;
       const { provider } = req.params;
 
-      const result = await oauthService.authenticate(
-        provider,
-        req.body,
-        clientIp,
-      );
+      const result = await oauthService.authenticate(provider, req.body, clientIp);
 
       ApiResponse.success(
         res,

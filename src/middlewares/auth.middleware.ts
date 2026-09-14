@@ -180,11 +180,13 @@ export const requireVerified = (options: RequireVerifiedOptions = {}) => {
 
     const checkEmail =
       options.email === true ||
-      (options.email !== false && (options.enforce || env.AUTH_REQUIRE_EMAIL_VERIFICATION));
+      (options.email !== false &&
+        (options.enforce || env.AUTH_REQUIRE_EMAIL_VERIFICATION));
 
     const checkPhone =
       options.phone === true ||
-      (options.phone !== false && (options.enforce || env.AUTH_REQUIRE_PHONE_VERIFICATION));
+      (options.phone !== false &&
+        (options.enforce || env.AUTH_REQUIRE_PHONE_VERIFICATION));
 
     if (checkEmail && !req.user.isEmailVerified) {
       return next(

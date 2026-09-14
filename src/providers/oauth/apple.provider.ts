@@ -1,6 +1,10 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { AuthProvider } from '@prisma/client';
-import { IOAuthProvider, OAuthPayloadInput, OAuthUserProfile } from '../../types/oauth.types';
+import {
+  IOAuthProvider,
+  OAuthPayloadInput,
+  OAuthUserProfile,
+} from '../../types/oauth.types';
 import { env } from '../../config/env';
 import { ApiError } from '../../utils/apiError';
 import { logger } from '../../utils/logger';
@@ -43,7 +47,9 @@ export class AppleOAuthProvider implements IOAuthProvider {
 
       // If client ID configured in env, ensure audience matches
       if (env.APPLE_CLIENT_ID && claims.aud && claims.aud !== env.APPLE_CLIENT_ID) {
-        throw new Error(`Apple audience mismatch. Expected: ${env.APPLE_CLIENT_ID}, received: ${claims.aud}`);
+        throw new Error(
+          `Apple audience mismatch. Expected: ${env.APPLE_CLIENT_ID}, received: ${claims.aud}`,
+        );
       }
 
       // In case user hid their email or Apple didn't include it in subsequent logins
@@ -57,7 +63,8 @@ export class AppleOAuthProvider implements IOAuthProvider {
         (claims.email ? claims.email.split('@')[0] : 'Apple User');
       const lastName = payload.user?.name?.lastName || null;
 
-      const isEmailVerified = claims.email_verified === true || claims.email_verified === 'true';
+      const isEmailVerified =
+        claims.email_verified === true || claims.email_verified === 'true';
 
       return {
         provider: this.provider,

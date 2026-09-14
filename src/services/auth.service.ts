@@ -54,7 +54,9 @@ export class AuthService {
         where: { phone: input.phone },
       });
       if (existingPhone) {
-        throw ApiError.conflict('Phone number is already associated with another account');
+        throw ApiError.conflict(
+          'Phone number is already associated with another account',
+        );
       }
     }
 
@@ -62,8 +64,12 @@ export class AuthService {
 
     // Support both 6-digit numeric OTP and 32-byte link token
     const isOtpMode = env.EMAIL_VERIFICATION_TYPE === 'otp';
-    const rawVerificationCode = isOtpMode ? generateNumericOtp(6) : generateRandomToken(32);
-    const storedVerificationToken = isOtpMode ? hashToken(rawVerificationCode) : rawVerificationCode;
+    const rawVerificationCode = isOtpMode
+      ? generateNumericOtp(6)
+      : generateRandomToken(32);
+    const storedVerificationToken = isOtpMode
+      ? hashToken(rawVerificationCode)
+      : rawVerificationCode;
     const emailOtpExpiresAt = isOtpMode
       ? new Date(Date.now() + env.EMAIL_OTP_EXPIRES_MINUTES * 60 * 1000).toISOString()
       : null;
@@ -96,13 +102,17 @@ export class AuthService {
       logger.info(`[Auth] Verification OTP for ${user.email}: ${rawVerificationCode}`);
       mailService
         .sendEmailVerificationOtp(user.email, user.firstName, rawVerificationCode)
-        .catch((err) => logger.error('[Auth] Error sending verification email OTP:', err));
+        .catch((err) =>
+          logger.error('[Auth] Error sending verification email OTP:', err),
+        );
     } else {
       const verifyUrl = `http://${env.HOST}:${env.PORT}/api/v1/auth/verify-email?token=${rawVerificationCode}`;
       logger.info(`[Auth] Verification Link for ${user.email}: ${verifyUrl}`);
       mailService
         .sendEmailVerificationLink(user.email, user.firstName, verifyUrl)
-        .catch((err) => logger.error('[Auth] Error sending verification link email:', err));
+        .catch((err) =>
+          logger.error('[Auth] Error sending verification link email:', err),
+        );
     }
 
     // If global toggle requires email verification, do not issue tokens until verified
@@ -219,7 +229,9 @@ export class AuthService {
 
     // Check account status
     if (!user.isActive || user.isDeactivated) {
-      throw ApiError.forbidden('Your account is currently deactivated or disabled. Please contact support.');
+      throw ApiError.forbidden(
+        'Your account is currently deactivated or disabled. Please contact support.',
+      );
     }
 
     // Check flexible email verification toggle
@@ -242,12 +254,16 @@ export class AuthService {
         },
       });
 
-      logger.info(`[Auth] User ${user.email} attempted login with unverified email. Dispatched fresh OTP: ${otp}`);
+      logger.info(
+        `[Auth] User ${user.email} attempted login with unverified email. Dispatched fresh OTP: ${otp}`,
+      );
 
       // Send OTP to email
       mailService
         .sendEmailVerificationOtp(user.email, user.firstName, otp)
-        .catch((err) => logger.error('[Auth] Failed to send email verification OTP on login:', err));
+        .catch((err) =>
+          logger.error('[Auth] Failed to send email verification OTP on login:', err),
+        );
 
       throw new ApiError(
         HttpStatus.FORBIDDEN,
@@ -321,7 +337,9 @@ export class AuthService {
       user.isDeactivated ||
       user.refreshTokenHash !== hashedIncomingToken
     ) {
-      throw ApiError.unauthorized('Invalid or revoked refresh token. Please log in again.');
+      throw ApiError.unauthorized(
+        'Invalid or revoked refresh token. Please log in again.',
+      );
     }
 
     // Rotate tokens
@@ -383,14 +401,19 @@ export class AuthService {
   /**
    * Resend email verification (OTP or link depending on configuration).
    */
-  async resendVerificationEmail(email: string): Promise<{ message: string; token?: string; otp?: string }> {
+  async resendVerificationEmail(
+    email: string,
+  ): Promise<{ message: string; token?: string; otp?: string }> {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
 
     if (!user || user.deletedAt) {
-      return { message: 'If that email address is registered, verification instructions have been sent.' };
+      return {
+        message:
+          'If that email address is registered, verification instructions have been sent.',
+      };
     }
 
     if (user.isEmailVerified) {
@@ -421,7 +444,9 @@ export class AuthService {
       logger.info(`[Auth] Resent verification OTP for ${user.email}: ${rawCodeOrToken}`);
       mailService
         .sendEmailVerificationOtp(user.email, user.firstName, rawCodeOrToken)
-        .catch((err) => logger.error('[Auth] Error sending verification OTP email:', err));
+        .catch((err) =>
+          logger.error('[Auth] Error sending verification OTP email:', err),
+        );
 
       return {
         message: 'A verification code has been sent to your email address.',
@@ -432,7 +457,9 @@ export class AuthService {
       logger.info(`[Auth] Resent verification link for ${user.email}: ${verifyUrl}`);
       mailService
         .sendEmailVerificationLink(user.email, user.firstName, verifyUrl)
-        .catch((err) => logger.error('[Auth] Error sending verification link email:', err));
+        .catch((err) =>
+          logger.error('[Auth] Error sending verification link email:', err),
+        );
 
       return {
         message: 'A verification link has been sent to your email address.',
@@ -451,7 +478,10 @@ export class AuthService {
     });
 
     if (!user || user.deletedAt) {
-      return { message: 'If that email address is registered, a verification code has been sent.' };
+      return {
+        message:
+          'If that email address is registered, a verification code has been sent.',
+      };
     }
 
     if (user.isEmailVerified) {
@@ -459,7 +489,9 @@ export class AuthService {
     }
 
     const otp = generateNumericOtp(6);
-    const expiresAt = new Date(Date.now() + env.EMAIL_OTP_EXPIRES_MINUTES * 60 * 1000).toISOString();
+    const expiresAt = new Date(
+      Date.now() + env.EMAIL_OTP_EXPIRES_MINUTES * 60 * 1000,
+    ).toISOString();
     const existingMetadata = (user.metadata as Record<string, unknown>) || {};
 
     await prisma.user.update({
@@ -507,7 +539,9 @@ export class AuthService {
     if (userMetadata.emailOtpExpiresAt) {
       const expiresAt = new Date(userMetadata.emailOtpExpiresAt as string);
       if (expiresAt < new Date()) {
-        throw ApiError.badRequest('Verification code has expired. Please request a new one.');
+        throw ApiError.badRequest(
+          'Verification code has expired. Please request a new one.',
+        );
       }
     }
 
@@ -573,7 +607,9 @@ export class AuthService {
       },
     });
 
-    logger.info(`[Auth] Generated phone OTP for ${phone}: ${otp} (expires in ${env.AUTH_OTP_EXPIRES_MINUTES}m)`);
+    logger.info(
+      `[Auth] Generated phone OTP for ${phone}: ${otp} (expires in ${env.AUTH_OTP_EXPIRES_MINUTES}m)`,
+    );
 
     return {
       message: 'Verification code sent to phone number successfully.',
@@ -594,11 +630,15 @@ export class AuthService {
     });
 
     if (!user || !user.resetOtpHash || !user.resetOtpExpiresAt) {
-      throw ApiError.badRequest('No pending verification code found for this phone number.');
+      throw ApiError.badRequest(
+        'No pending verification code found for this phone number.',
+      );
     }
 
     if (user.resetOtpExpiresAt < new Date()) {
-      throw ApiError.badRequest('Verification code has expired. Please request a new one.');
+      throw ApiError.badRequest(
+        'Verification code has expired. Please request a new one.',
+      );
     }
 
     const hashedOtp = hashToken(otp);
@@ -629,7 +669,10 @@ export class AuthService {
     });
 
     if (!user || user.deletedAt) {
-      return { message: 'If an account exists with that email, password reset instructions have been sent.' };
+      return {
+        message:
+          'If an account exists with that email, password reset instructions have been sent.',
+      };
     }
 
     // Generate 6-digit numeric OTP or token for reset
@@ -648,11 +691,17 @@ export class AuthService {
 
     // Send email with reset code
     mailService
-      .sendPasswordReset(user.email, user.firstName, resetCode, env.AUTH_OTP_EXPIRES_MINUTES)
+      .sendPasswordReset(
+        user.email,
+        user.firstName,
+        resetCode,
+        env.AUTH_OTP_EXPIRES_MINUTES,
+      )
       .catch((err) => logger.error('[Auth] Failed to send password reset email:', err));
 
     return {
-      message: 'If an account exists with that email, password reset instructions have been sent.',
+      message:
+        'If an account exists with that email, password reset instructions have been sent.',
       ...(env.NODE_ENV === 'development' && { resetToken: resetCode }),
     };
   }
@@ -671,7 +720,9 @@ export class AuthService {
     }
 
     if (user.resetOtpExpiresAt < new Date()) {
-      throw ApiError.badRequest('Password reset token has expired. Please request a new one.');
+      throw ApiError.badRequest(
+        'Password reset token has expired. Please request a new one.',
+      );
     }
 
     const hashedInput = hashToken(input.tokenOrOtp);
@@ -759,11 +810,14 @@ export class AuthService {
     }
 
     // If updating phone, check uniqueness and reset phone verification
-    const phoneUpdate = data.phone !== undefined ? {
-      phone: data.phone,
-      isPhoneVerified: false,
-      phoneVerifiedAt: null,
-    } : {};
+    const phoneUpdate =
+      data.phone !== undefined
+        ? {
+            phone: data.phone,
+            isPhoneVerified: false,
+            phoneVerifiedAt: null,
+          }
+        : {};
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },

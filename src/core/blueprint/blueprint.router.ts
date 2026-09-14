@@ -27,11 +27,13 @@ export function createBlueprintRouter(
   }
 
   // Base Blueprint routes
-  router.route('/')
+  router
+    .route('/')
     .get(controller.getAll)
     .post(...createMiddlewares, controller.create);
 
-  router.route('/:id')
+  router
+    .route('/:id')
     .get(controller.getById)
     .patch(...updateMiddlewares, controller.update)
     .delete(controller.delete);

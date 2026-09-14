@@ -9,7 +9,10 @@ export const registerSchema = z.object({
     username: z
       .string()
       .min(3, 'Username must be at least 3 characters')
-      .regex(/^[a-zA-Z0-9_.-]+$/, 'Username can only contain letters, numbers, dots, and underscores')
+      .regex(
+        /^[a-zA-Z0-9_.-]+$/,
+        'Username can only contain letters, numbers, dots, and underscores',
+      )
       .optional(),
     email: z
       .string({ required_error: 'Email is required' })
@@ -139,7 +142,10 @@ export const updateMeSchema = z.object({
       username: z
         .string()
         .min(3, 'Username must be at least 3 characters')
-        .regex(/^[a-zA-Z0-9_.-]+$/, 'Username can only contain letters, numbers, dots, and underscores')
+        .regex(
+          /^[a-zA-Z0-9_.-]+$/,
+          'Username can only contain letters, numbers, dots, and underscores',
+        )
         .optional(),
       phone: z.string().optional(),
       image: z.string().url('Invalid image URL').optional(),
@@ -159,7 +165,9 @@ export type RegisterInput = z.infer<typeof registerSchema>['body'];
 export type LoginInput = z.infer<typeof loginSchema>['body'];
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>['body'];
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>['body'];
-export type ResendVerificationEmailInput = z.infer<typeof resendVerificationEmailSchema>['body'];
+export type ResendVerificationEmailInput = z.infer<
+  typeof resendVerificationEmailSchema
+>['body'];
 export type SendEmailOtpInput = z.infer<typeof sendEmailOtpSchema>['body'];
 export type VerifyEmailOtpInput = z.infer<typeof verifyEmailOtpSchema>['body'];
 export type SendPhoneOtpInput = z.infer<typeof sendPhoneOtpSchema>['body'];

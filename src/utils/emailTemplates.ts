@@ -155,7 +155,10 @@ function wrapEmailLayout(title: string, contentHtml: string): string {
 /**
  * Render email verification OTP template
  */
-export function renderEmailOtpTemplate(data: EmailOtpTemplateData): { html: string; text: string } {
+export function renderEmailOtpTemplate(data: EmailOtpTemplateData): {
+  html: string;
+  text: string;
+} {
   const content = `
     <p class="greeting">Hello ${data.name || 'there'},</p>
     <p>Thank you for signing up! To complete your account verification, please enter the one-time verification code below:</p>
@@ -188,7 +191,10 @@ If you did not request this code, please ignore this email.
 /**
  * Render verification link template
  */
-export function renderEmailLinkTemplate(data: EmailLinkTemplateData): { html: string; text: string } {
+export function renderEmailLinkTemplate(data: EmailLinkTemplateData): {
+  html: string;
+  text: string;
+} {
   const content = `
     <p class="greeting">Hello ${data.name || 'there'},</p>
     <p>Please confirm your email address by clicking the button below:</p>
@@ -222,7 +228,10 @@ If you did not create an account, please ignore this email.
 /**
  * Render password reset template
  */
-export function renderPasswordResetTemplate(data: PasswordResetTemplateData): { html: string; text: string } {
+export function renderPasswordResetTemplate(data: PasswordResetTemplateData): {
+  html: string;
+  text: string;
+} {
   const isCode = data.tokenOrOtp.length <= 8 && /^[0-9]+$/.test(data.tokenOrOtp);
 
   const codeOrButton = isCode

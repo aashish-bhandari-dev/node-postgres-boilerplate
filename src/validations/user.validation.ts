@@ -12,15 +12,15 @@ export const createUserSchema = z.object({
     username: z
       .string()
       .min(3, 'Username must be at least 3 characters')
-      .regex(/^[a-zA-Z0-9_.-]+$/, 'Username can only contain letters, numbers, dots, and underscores')
+      .regex(
+        /^[a-zA-Z0-9_.-]+$/,
+        'Username can only contain letters, numbers, dots, and underscores',
+      )
       .optional(),
     email: z
       .string({ required_error: 'Email is required' })
       .email('Invalid email address'),
-    password: z
-      .string()
-      .min(6, 'Password must be at least 6 characters')
-      .optional(),
+    password: z.string().min(6, 'Password must be at least 6 characters').optional(),
     phone: z.string().optional(),
     image: z.string().url('Invalid image URL').optional(),
     bio: z.string().max(500, 'Bio cannot exceed 500 characters').optional(),
@@ -48,7 +48,10 @@ export const updateUserSchema = z.object({
       username: z
         .string()
         .min(3, 'Username must be at least 3 characters')
-        .regex(/^[a-zA-Z0-9_.-]+$/, 'Username can only contain letters, numbers, dots, and underscores')
+        .regex(
+          /^[a-zA-Z0-9_.-]+$/,
+          'Username can only contain letters, numbers, dots, and underscores',
+        )
         .optional(),
       email: z.string().email('Invalid email address').optional(),
       password: z.string().min(6, 'Password must be at least 6 characters').optional(),
@@ -84,8 +87,14 @@ export const listUsersQuerySchema = z.object({
     search: z.string().optional(),
     role: userRoleEnum.optional(),
     provider: authProviderEnum.optional(),
-    isActive: z.preprocess((val) => (val === 'true' ? true : val === 'false' ? false : val), z.boolean().optional()),
-    isEmailVerified: z.preprocess((val) => (val === 'true' ? true : val === 'false' ? false : val), z.boolean().optional()),
+    isActive: z.preprocess(
+      (val) => (val === 'true' ? true : val === 'false' ? false : val),
+      z.boolean().optional(),
+    ),
+    isEmailVerified: z.preprocess(
+      (val) => (val === 'true' ? true : val === 'false' ? false : val),
+      z.boolean().optional(),
+    ),
   }),
 });
 

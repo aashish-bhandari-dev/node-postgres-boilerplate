@@ -10,6 +10,4 @@ import { userModule } from './user.module';
  * 3. Add it to this array.
  * Endpoints are immediately available at `/api/<model>s` and `/api/v1/<model>s`!
  */
-export const modules: Blueprint[] = [
-  userModule,
-];
+export const modules: Blueprint[] = [userModule];

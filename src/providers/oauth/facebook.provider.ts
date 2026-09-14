@@ -1,5 +1,9 @@
 import { AuthProvider } from '@prisma/client';
-import { IOAuthProvider, OAuthPayloadInput, OAuthUserProfile } from '../../types/oauth.types';
+import {
+  IOAuthProvider,
+  OAuthPayloadInput,
+  OAuthUserProfile,
+} from '../../types/oauth.types';
 import { ApiError } from '../../utils/apiError';
 import { logger } from '../../utils/logger';
 
@@ -48,7 +52,7 @@ export class FacebookOAuthProvider implements IOAuthProvider {
         : `fb_${data.id}@facebook.placeholder`;
 
       const firstName = data.first_name || data.name?.split(' ')[0] || 'Facebook User';
-      const lastName = data.last_name || (data.name?.split(' ').slice(1).join(' ') || null);
+      const lastName = data.last_name || data.name?.split(' ').slice(1).join(' ') || null;
       const image = data.picture?.data?.url || null;
 
       return {

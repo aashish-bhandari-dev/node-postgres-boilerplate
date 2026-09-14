@@ -126,7 +126,9 @@ export class OAuthService {
         },
       });
 
-      logger.info(`[OAuth] Created new user from ${profile.provider}: ${user.email} (ID: ${user.id})`);
+      logger.info(
+        `[OAuth] Created new user from ${profile.provider}: ${user.email} (ID: ${user.id})`,
+      );
     }
 
     // Generate JWT access & refresh token pair
