@@ -1,5 +1,7 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import { env } from './env';
+import { modules } from '../modules';
+import { generateBlueprintSwagger } from '../core/blueprint';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -32,4 +34,32 @@ const options: swaggerJsdoc.Options = {
   apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
 };
 
-export const swaggerSpec = swaggerJsdoc(options);
+// Generate base documentation from JSDoc annotations
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const baseSpec = swaggerJsdoc(options) as Record<string, any>;
+
+// Automatically generate OpenAPI docs for all registered blueprints
+const blueprintDocs = generateBlueprintSwagger(modules);
+
+// Merge generated blueprint paths
+baseSpec.paths = {
+  ...(baseSpec.paths || {}),
+  ...blueprintDocs.paths,
+};
+
+// Merge generated blueprint schemas
+baseSpec.components = {
+  ...(baseSpec.components || {}),
+  schemas: {
+    ...((baseSpec.components && baseSpec.components.schemas) || {}),
+    ...blueprintDocs.components.schemas,
+  },
+};
+
+// Merge generated blueprint tags
+baseSpec.tags = [
+  ...((baseSpec.tags as Array<{ name: string; description: string }>) || []),
+  ...blueprintDocs.tags,
+];
+
+export const swaggerSpec = baseSpec;

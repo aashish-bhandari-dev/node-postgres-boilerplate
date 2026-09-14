@@ -7,6 +7,7 @@ import { BlueprintConfig } from './types';
 export interface Blueprint {
   model: string;
   path: string;
+  config: CreateBlueprintOptions;
   service: BaseBlueprintService;
   controller: BaseBlueprintController;
   router: Router;
@@ -42,6 +43,7 @@ export function createBlueprint(options: CreateBlueprintOptions): Blueprint {
   return {
     model,
     path,
+    config: options,
     service,
     controller,
     router,
