@@ -2,6 +2,7 @@ name: Code Quality & Build
 
 on:
   workflow_dispatch:
+  # Uncomment below to trigger automatically on push / pull request:
   # push:
   #   branches: [main, master, develop]
   # pull_request:
@@ -10,6 +11,12 @@ on:
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
 #   cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/node_boilerplate_test?schema=public
+  JWT_ACCESS_SECRET: ci_jwt_access_secret_mock_key_12345
+  JWT_REFRESH_SECRET: ci_jwt_refresh_secret_mock_key_67890
 
 jobs:
   lint-and-build:
