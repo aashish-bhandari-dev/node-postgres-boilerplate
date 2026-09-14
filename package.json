@@ -10,6 +10,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
@@ -56,15 +58,18 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.13.9",
     "@types/nodemailer": "^8.0.1",
+    "@types/supertest": "^7.2.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^9.21.0",
     "eslint-config-prettier": "^10.0.1",
     "prettier": "^3.5.2",
     "prisma": "^6.4.1",
+    "supertest": "^7.2.2",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.25.0"
+    "typescript-eslint": "^8.25.0",
+    "vitest": "^5.0.0"
   },
   "engines": {
     "node": ">=20.0.0"
