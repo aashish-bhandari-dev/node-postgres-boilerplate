@@ -160,6 +160,38 @@ The server will start at:
 | `GET`  | `/api/v1/auth/me` | Retrieve authenticated user profile | **Yes (Bearer)** |
 | `PATCH`| `/api/v1/auth/me` | Update authenticated user profile | **Yes (Bearer)** |
 | `POST` | `/api/v1/auth/change-password` | Change password for logged in user | **Yes (Bearer)** |
+| `POST` | `/api/v1/auth/oauth/:provider` | Social login/register (`google`, `facebook`, `apple`) | No |
+
+---
+
+### 🌐 Social Authentication (Google, Facebook, Apple)
+
+The boilerplate supports direct token verification for single page applications (React, Vue, Next.js) and mobile applications (iOS, Android, React Native, Flutter):
+
+```bash
+# Google Sign In
+POST /api/v1/auth/oauth/google
+Content-Type: application/json
+{ "idToken": "google_identity_jwt_or_credential" }
+
+# Facebook Login
+POST /api/v1/auth/oauth/facebook
+Content-Type: application/json
+{ "accessToken": "facebook_user_access_token" }
+
+# Apple Sign In
+POST /api/v1/auth/oauth/apple
+Content-Type: application/json
+{ 
+  "idToken": "apple_identity_jwt",
+  "user": { "name": { "firstName": "Jane", "lastName": "Doe" } } 
+}
+```
+
+**Features:**
+- **Automatic Email Verification**: Emails verified by Google, Facebook, or Apple automatically set `isEmailVerified: true`.
+- **Account Linking**: If an account with the same email already exists, social credentials are securely linked.
+- **Null Passwords**: Social-only accounts have `password: null` to prevent unauthorized password logins.
 
 ---
 

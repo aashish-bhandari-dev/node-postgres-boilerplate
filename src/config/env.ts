@@ -47,6 +47,15 @@ const envSchema = z.object({
   EMAIL_FROM_ADDRESS: z.string().email().default('noreply@example.com'),
   EMAIL_VERIFICATION_TYPE: z.enum(['otp', 'link']).default('otp'),
   EMAIL_OTP_EXPIRES_MINUTES: z.coerce.number().default(10),
+
+  // OAuth / Social Providers
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  FACEBOOK_APP_ID: z.string().optional(),
+  FACEBOOK_APP_SECRET: z.string().optional(),
+  APPLE_CLIENT_ID: z.string().optional(),
+  APPLE_TEAM_ID: z.string().optional(),
+  APPLE_KEY_ID: z.string().optional(),
 });
 
 const parseEnv = () => {

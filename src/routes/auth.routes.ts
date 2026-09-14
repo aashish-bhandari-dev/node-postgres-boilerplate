@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
+import { oauthController } from '../controllers/oauth.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validate.middleware';
+import { oauthLoginSchema } from '../validations/oauth.validation';
 import {
   registerSchema,
   loginSchema,
@@ -393,6 +395,69 @@ router.post(
   authenticate(),
   validateRequest(changePasswordSchema),
   authController.changePassword,
+);
+
+/**
+ * @openapi
+ * /api/v1/auth/oauth/{provider}:
+ *   post:
+ *     summary: Social login or registration via Google, Facebook, or Apple
+ *     description: Authenticates or registers a user via social identity providers. Email is automatically verified. Returns JWT access & refresh tokens.
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: path
+ *         name: provider
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [google, facebook, apple]
+ *         description: The social auth provider name
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *                 description: Identity token (used by Google and Apple)
+ *               accessToken:
+ *                 type: string
+ *                 description: User access token (used by Facebook)
+ *               token:
+ *                 type: string
+ *                 description: Fallback token parameter
+ *               code:
+ *                 type: string
+ *                 description: Server-side authorization code (Google)
+ *               redirectUri:
+ *                 type: string
+ *                 description: Redirect URI used when generating code
+ *               user:
+ *                 type: object
+ *                 description: Optional user profile payload returned by Apple on initial sign-in
+ *                 properties:
+ *                   name:
+ *                     type: object
+ *                     properties:
+ *                       firstName: { type: string }
+ *                       lastName: { type: string }
+ *                   email: { type: string }
+ *     responses:
+ *       200:
+ *         description: Logged in successfully, returns user profile and JWT tokens
+ *       400:
+ *         description: Validation error or missing token
+ *       401:
+ *         description: Invalid or expired third-party token
+ *       403:
+ *         description: User account is disabled or deactivated
+ */
+router.post(
+  '/oauth/:provider',
+  validateRequest(oauthLoginSchema),
+  oauthController.oauthLogin,
 );
 
 export default router;
