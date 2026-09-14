@@ -113,12 +113,12 @@ async function main() {
     },
   });
 
-  // 4. Customer (customer@gmail.com)
-  const customer = await prisma.user.upsert({
-    where: { email: 'customer@gmail.com' },
+  // 4. Regular User (user@gmail.com)
+  const user = await prisma.user.upsert({
+    where: { email: 'user@gmail.com' },
     update: {
       password: hashedPassword,
-      role: UserRole.CUSTOMER,
+      role: UserRole.USER,
       isActive: true,
       isDeactivated: false,
       isEmailVerified: true,
@@ -130,13 +130,13 @@ async function main() {
       deletedAt: null,
     },
     create: {
-      email: 'customer@gmail.com',
-      username: 'customer',
-      firstName: 'Jane',
-      lastName: 'Customer',
+      email: 'user@gmail.com',
+      username: 'user',
+      firstName: 'Regular',
+      lastName: 'User',
       password: hashedPassword,
       phone: '+1555555555',
-      role: UserRole.CUSTOMER,
+      role: UserRole.USER,
       provider: AuthProvider.LOCAL,
       isEmailVerified: true,
       emailVerifiedAt: new Date(),
@@ -168,9 +168,9 @@ async function main() {
       Password: defaultPassword,
     },
     {
-      Role: customer.role,
-      Email: customer.email,
-      Username: customer.username,
+      Role: user.role,
+      Email: user.email,
+      Username: user.username,
       Password: defaultPassword,
     },
   ]);

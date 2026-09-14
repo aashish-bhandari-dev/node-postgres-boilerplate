@@ -59,7 +59,7 @@ describe('Auth Middleware', () => {
 
     it('should block user with unauthorized role with 403', () => {
       const req = {
-        user: { role: UserRole.CUSTOMER },
+        user: { role: UserRole.USER },
       } as unknown as Request;
       const next = vi.fn();
 

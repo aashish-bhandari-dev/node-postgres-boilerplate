@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const userRoleEnum = z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CUSTOMER']);
+const userRoleEnum = z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER']);
 const authProviderEnum = z.enum(['LOCAL', 'GOOGLE', 'APPLE', 'GITHUB', 'FACEBOOK']);
 
 export const createUserSchema = z.object({
@@ -28,7 +28,7 @@ export const createUserSchema = z.object({
     dateOfBirth: z.coerce.date().optional(),
     locale: z.string().default('en').optional(),
     timezone: z.string().default('UTC').optional(),
-    role: userRoleEnum.optional().default('CUSTOMER'),
+    role: userRoleEnum.optional().default('USER'),
     provider: authProviderEnum.optional().default('LOCAL'),
     providerId: z.string().optional(),
     isActive: z.boolean().optional().default(true),

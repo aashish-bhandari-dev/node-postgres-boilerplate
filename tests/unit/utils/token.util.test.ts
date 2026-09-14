@@ -15,7 +15,7 @@ describe('Token Utility', () => {
   const mockPayload = {
     userId: '123e4567-e89b-12d3-a456-426614174000',
     email: 'test@example.com',
-    role: UserRole.CUSTOMER,
+    role: UserRole.USER,
   };
 
   describe('JWT Access Token', () => {

@@ -14,7 +14,7 @@ enum UserRole {
   SUPER_ADMIN
   ADMIN
   MANAGER
-  CUSTOMER
+  USER
 }
 
 enum AuthProvider {
@@ -45,7 +45,7 @@ model User {
   timezone    String    @default("UTC")
 
   // Authorization & Roles
-  role        UserRole  @default(CUSTOMER)
+  role        UserRole  @default(USER)
 
   // Account Lifecycle & Status
   isActive      Boolean   @default(true)

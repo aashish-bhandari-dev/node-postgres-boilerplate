@@ -78,7 +78,7 @@ export class AuthService {
         phone: input.phone ? input.phone.trim() : null,
         locale: input.locale || 'en',
         timezone: input.timezone || 'UTC',
-        role: UserRole.CUSTOMER,
+        role: UserRole.USER,
         provider: AuthProvider.LOCAL,
         isEmailVerified: false,
         emailVerificationToken: storedVerificationToken,

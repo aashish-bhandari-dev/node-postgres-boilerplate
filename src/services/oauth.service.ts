@@ -116,7 +116,7 @@ export class OAuthService {
           email: profile.email,
           image: profile.image,
           password: null, // OAuth-only account
-          role: UserRole.CUSTOMER,
+          role: UserRole.USER,
           provider: profile.provider,
           providerId: profile.providerId,
           isEmailVerified: profile.isEmailVerified,
