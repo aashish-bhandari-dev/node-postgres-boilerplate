@@ -212,19 +212,19 @@ All responses follow a consistent, standardized envelope format:
 
 ---
 
-## ⚡ Zero-Boilerplate Auto-CRUD Engine
+## ⚡ Zero-Boilerplate Blueprint Engine
 
-You don't need to rewrite repetitive controllers, services, routes, pagination, or search logic for standard model CRUDs.
+You don't need to rewrite repetitive controllers, services, routes, pagination, or search logic for standard models.
 
-### 1. Pure Auto-CRUD (Zero Boilerplate)
+### 1. Pure Blueprint (Zero Boilerplate)
 
 When you add a model to `prisma/schema.prisma` (e.g. `User`, `Post`, `Product`), create a module file in `src/modules/post.module.ts`:
 
 ```typescript
 import { z } from 'zod';
-import { defineModule } from '../core/crud';
+import { defineBlueprint } from '../core/blueprint';
 
-export const postModule = defineModule({
+export const postModule = defineBlueprint({
   model: 'post', // Lowercase Prisma delegate name
   searchableFields: ['title', 'content'],
   filterFields: ['published', 'authorId'],
@@ -242,15 +242,15 @@ export const postModule = defineModule({
 });
 ```
 
-Then register it in `src/resources/index.ts`:
+Then register it in `src/modules/index.ts`:
 
 ```typescript
-import { userResource } from './user.resource';
-import { postResource } from './post.resource';
+import { userModule } from './user.module';
+import { postModule } from './post.module';
 
-export const resources = [
-  userResource,
-  postResource,
+export const modules = [
+  userModule,
+  postModule,
 ];
 ```
 
@@ -263,13 +263,13 @@ export const resources = [
 
 ### 2. Overriding and Customizing Methods
 
-Whenever you need custom business logic (e.g., password hashing, sanitizing input, custom authorization, extra endpoints), you can pass custom hooks or extend `BaseCrudService` / `BaseCrudController`:
+Whenever you need custom business logic (e.g., password hashing, sanitizing input, custom authorization, extra endpoints), you can pass custom hooks or extend `BaseBlueprintService` / `BaseBlueprintController`:
 
 ```typescript
-import { BaseCrudService, BaseCrudController, defineResource } from '../core/crud';
+import { BaseBlueprintService, BaseBlueprintController, defineBlueprint } from '../core/blueprint';
 
 // 1. Override Service methods or lifecycle hooks
-export class CustomUserService extends BaseCrudService {
+export class CustomUserService extends BaseBlueprintService {
   // Lifecycle hook: normalizes email before create
   override async beforeCreate(data: Record<string, unknown>) {
     return {
@@ -289,7 +289,7 @@ export class CustomUserService extends BaseCrudService {
 }
 
 // 2. Add custom endpoints to Controller & Router
-export class CustomUserController extends BaseCrudController<CustomUserService> {
+export class CustomUserController extends BaseBlueprintController<CustomUserService> {
   async toggleActive(req: Request, res: Response, next: NextFunction) {
     const user = await this.service.getById(req.params.id) as { isActive: boolean };
     const updated = await this.service.update(req.params.id, { isActive: !user.isActive });
@@ -300,7 +300,7 @@ export class CustomUserController extends BaseCrudController<CustomUserService> 
 const customService = new CustomUserService('user');
 const customController = new CustomUserController(customService);
 
-export const userResource = defineResource({
+export const userModule = defineBlueprint({
   model: 'user',
   service: customService,
   controller: customController,

@@ -8,7 +8,7 @@ const router = Router();
 // System health check
 router.use('/health', healthRoutes);
 
-// Dynamically mount all registered CRUD modules
+// Dynamically mount all registered blueprint modules
 for (const mod of modules) {
   router.use(`/${mod.path}`, mod.router);
 }

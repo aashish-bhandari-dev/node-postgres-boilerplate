@@ -1,11 +1,11 @@
 import { Router, RequestHandler } from 'express';
-import { BaseCrudController } from './crud.controller';
-import { CrudResourceConfig } from './types';
+import { BaseBlueprintController } from './blueprint.controller';
+import { BlueprintConfig } from './types';
 import { validateRequest } from '../../middlewares/validate.middleware';
 
-export function createCrudRouter(
-  config: CrudResourceConfig,
-  controller: BaseCrudController,
+export function createBlueprintRouter(
+  config: BlueprintConfig,
+  controller: BaseBlueprintController,
   extendRouter?: (router: Router) => void,
 ): Router {
   const router = Router();
@@ -26,7 +26,7 @@ export function createCrudRouter(
     updateMiddlewares.push(validateRequest(config.validation.update));
   }
 
-  // Base CRUD routes
+  // Base Blueprint routes
   router.route('/')
     .get(controller.getAll)
     .post(...createMiddlewares, controller.create);
@@ -43,3 +43,6 @@ export function createCrudRouter(
 
   return router;
 }
+
+// Alias for backwards compatibility
+export const createCrudRouter = createBlueprintRouter;

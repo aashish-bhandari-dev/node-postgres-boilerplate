@@ -1,7 +1,7 @@
 import { prisma } from '../../config/db';
 import { ApiError } from '../../utils/apiError';
 import { PaginatedResult } from '../../types';
-import { CrudQueryOptions, CrudResourceConfig } from './types';
+import { BlueprintQueryOptions, BlueprintConfig } from './types';
 
 interface GenericPrismaDelegate {
   count(args?: Record<string, unknown>): Promise<number>;
@@ -12,11 +12,11 @@ interface GenericPrismaDelegate {
   delete(args: Record<string, unknown>): Promise<unknown>;
 }
 
-export class BaseCrudService<TModel = Record<string, unknown>> {
+export class BaseBlueprintService<TModel = Record<string, unknown>> {
   protected readonly modelName: string;
-  protected readonly config: CrudResourceConfig<TModel>;
+  protected readonly config: BlueprintConfig<TModel>;
 
-  constructor(modelName: string, config: CrudResourceConfig<TModel> = { model: modelName }) {
+  constructor(modelName: string, config: BlueprintConfig<TModel> = { model: modelName }) {
     this.modelName = modelName;
     this.config = config;
   }
@@ -118,7 +118,7 @@ export class BaseCrudService<TModel = Record<string, unknown>> {
   /**
    * List records with pagination, search, filter, and sorting
    */
-  async getAll(options: CrudQueryOptions = {}): Promise<PaginatedResult<TModel>> {
+  async getAll(options: BlueprintQueryOptions = {}): Promise<PaginatedResult<TModel>> {
     const page = Math.max(1, Number(options.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(options.limit) || 10));
     const skip = (page - 1) * limit;
@@ -274,3 +274,7 @@ export class BaseCrudService<TModel = Record<string, unknown>> {
     return deleted as TModel;
   }
 }
+
+// Alias for backwards compatibility
+export const BaseCrudService = BaseBlueprintService;
+export type BaseCrudService<TModel = Record<string, unknown>> = BaseBlueprintService<TModel>;

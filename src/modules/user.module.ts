@@ -1,4 +1,4 @@
-import { defineModule } from '../core/crud';
+import { defineBlueprint } from '../core/blueprint';
 import { createUserSchema, updateUserSchema } from '../validations/user.validation';
 import { UserResource } from '../resources/user.resource';
 
@@ -14,7 +14,7 @@ import { UserResource } from '../resources/user.resource';
  *
  * Automatically transforms responses via UserResource to strip passwords and security tokens.
  */
-export const userModule = defineModule({
+export const userModule = defineBlueprint({
   model: 'user',
   searchableFields: ['firstName', 'lastName', 'username', 'email', 'phone'],
   filterFields: ['role', 'provider', 'isActive', 'isEmailVerified', 'isDeactivated'],

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { AnyZodObject } from 'zod';
 
-export interface CrudQueryOptions {
+export interface BlueprintQueryOptions {
   page?: number;
   limit?: number;
   search?: string;
@@ -10,7 +10,7 @@ export interface CrudQueryOptions {
   filter?: Record<string, unknown>;
 }
 
-export interface CrudHooks<T = Record<string, unknown>> {
+export interface BlueprintHooks<T = Record<string, unknown>> {
   beforeCreate?: (data: Record<string, unknown>) => Promise<Record<string, unknown>> | Record<string, unknown>;
   afterCreate?: (result: T) => Promise<void> | void;
   beforeUpdate?: (id: string | number, data: Record<string, unknown>) => Promise<Record<string, unknown>> | Record<string, unknown>;
@@ -19,14 +19,14 @@ export interface CrudHooks<T = Record<string, unknown>> {
   afterDelete?: (result: T) => Promise<void> | void;
 }
 
-export interface CrudResourceConfig<TModel = Record<string, unknown>> {
+export interface BlueprintConfig<TModel = Record<string, unknown>> {
   /**
    * The Prisma client delegate name in lowercase, e.g. 'user', 'post', 'product'
    */
   model: string;
 
   /**
-   * Endpoint path prefix under /admin, e.g. 'users', 'posts'. Defaults to `${model}s`
+   * Endpoint path prefix, e.g. 'users', 'posts'. Defaults to `${model}s`
    */
   path?: string;
 
@@ -67,14 +67,14 @@ export interface CrudResourceConfig<TModel = Record<string, unknown>> {
   };
 
   /**
-   * Middleware applied to all routes in this CRUD resource (e.g. auth, role check)
+   * Middleware applied to all routes in this blueprint (e.g. auth, role check)
    */
   middlewares?: RequestHandler[];
 
   /**
    * Lifecycle hooks
    */
-  hooks?: CrudHooks<TModel>;
+  hooks?: BlueprintHooks<TModel>;
 
   /**
    * Optional Laravel-style JsonResource class to format response data
@@ -89,4 +89,10 @@ export interface CrudResourceConfig<TModel = Record<string, unknown>> {
   transform?: (data: any) => Record<string, unknown>;
 }
 
-export type CrudHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export type BlueprintHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+
+// Aliases for backwards compatibility
+export type CrudQueryOptions = BlueprintQueryOptions;
+export type CrudHooks<T = Record<string, unknown>> = BlueprintHooks<T>;
+export type CrudResourceConfig<TModel = Record<string, unknown>> = BlueprintConfig<TModel>;
+export type CrudHandler = BlueprintHandler;

@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { BaseCrudService } from './crud.service';
+import { BaseBlueprintService } from './blueprint.service';
 import { ApiResponse } from '../../utils/apiResponse';
-import { CrudQueryOptions } from './types';
+import { BlueprintQueryOptions } from './types';
 
-export class BaseCrudController<TService extends BaseCrudService = BaseCrudService> {
+export class BaseBlueprintController<TService extends BaseBlueprintService = BaseBlueprintService> {
   protected readonly service: TService;
 
   constructor(service: TService) {
@@ -19,7 +19,7 @@ export class BaseCrudController<TService extends BaseCrudService = BaseCrudServi
 
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const queryOptions: CrudQueryOptions = {
+      const queryOptions: BlueprintQueryOptions = {
         page: req.query.page ? Number(req.query.page) : undefined,
         limit: req.query.limit ? Number(req.query.limit) : undefined,
         search: req.query.search as string | undefined,
@@ -71,3 +71,7 @@ export class BaseCrudController<TService extends BaseCrudService = BaseCrudServi
     }
   }
 }
+
+// Alias for backwards compatibility
+export const BaseCrudController = BaseBlueprintController;
+export type BaseCrudController<TService extends BaseBlueprintService = BaseBlueprintService> = BaseBlueprintController<TService>;
