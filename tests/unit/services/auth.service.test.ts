@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UserRole, AuthProvider } from '@prisma/client';
+import { UserRole, AuthProvider, User } from '@prisma/client';
 import { AuthService } from '../../../src/services/auth.service';
 import { prisma } from '../../../src/config/db';
 import { mailService } from '../../../src/services/mail.service';
@@ -58,7 +58,7 @@ describe('Auth Service', () => {
         updatedAt: new Date(),
       };
 
-      vi.mocked(prisma.user.create).mockResolvedValue(mockCreatedUser as any);
+      vi.mocked(prisma.user.create).mockResolvedValue(mockCreatedUser as unknown as User);
 
       const result = await authService.register({
         firstName: 'John',
@@ -76,7 +76,7 @@ describe('Auth Service', () => {
     });
 
     it('should throw conflict error if email is already taken', async () => {
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'existing_usr' } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'existing_usr' } as unknown as User);
 
       await expect(
         authService.register({
@@ -90,7 +90,7 @@ describe('Auth Service', () => {
     it('should throw conflict error if username is already taken', async () => {
       vi.mocked(prisma.user.findUnique)
         .mockResolvedValueOnce(null) // email check passes
-        .mockResolvedValueOnce({ id: 'existing_username_usr' } as any); // username check fails
+        .mockResolvedValueOnce({ id: 'existing_username_usr' } as unknown as User); // username check fails
 
       await expect(
         authService.register({
@@ -106,7 +106,7 @@ describe('Auth Service', () => {
       vi.mocked(prisma.user.findUnique)
         .mockResolvedValueOnce(null) // email check passes
         .mockResolvedValueOnce(null) // username check passes
-        .mockResolvedValueOnce({ id: 'existing_phone_usr' } as any); // phone check fails
+        .mockResolvedValueOnce({ id: 'existing_phone_usr' } as unknown as User); // phone check fails
 
       await expect(
         authService.register({
@@ -145,8 +145,8 @@ describe('Auth Service', () => {
         updatedAt: new Date(),
       };
 
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
-      vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as unknown as User);
+      vi.mocked(prisma.user.update).mockResolvedValue(mockUser as unknown as User);
 
       const result = await authService.login({
         identifier: 'jane@example.com',
@@ -155,8 +155,8 @@ describe('Auth Service', () => {
 
       expect(result.user).toBeDefined();
       expect(result.tokens).toBeDefined();
-      expect(result.tokens.accessToken).toBeDefined();
-      expect(result.tokens.refreshToken).toBeDefined();
+      expect(result.tokens?.accessToken).toBeDefined();
+      expect(result.tokens?.refreshToken).toBeDefined();
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: mockUser.id },
@@ -190,7 +190,7 @@ describe('Auth Service', () => {
         isDeactivated: false,
       };
 
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(lockedUser as any);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(lockedUser as unknown as User);
 
       await expect(
         authService.login({
@@ -212,8 +212,8 @@ describe('Auth Service', () => {
         isDeactivated: false,
       };
 
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
-      vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as unknown as User);
+      vi.mocked(prisma.user.update).mockResolvedValue(mockUser as unknown as User);
 
       await expect(
         authService.login({
@@ -235,7 +235,7 @@ describe('Auth Service', () => {
     it('should require email verification if user email is unverified, dispatch fresh OTP and throw 403', async () => {
       const { env } = await import('../../../src/config/env');
       const originalRequireEmail = env.AUTH_REQUIRE_EMAIL_VERIFICATION;
-      (env as any).AUTH_REQUIRE_EMAIL_VERIFICATION = true;
+      Object.assign(env, { AUTH_REQUIRE_EMAIL_VERIFICATION: true });
 
       try {
         const password = 'Password123!';
@@ -254,8 +254,8 @@ describe('Auth Service', () => {
           metadata: {},
         };
 
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(unverifiedUser as any);
-        vi.mocked(prisma.user.update).mockResolvedValue(unverifiedUser as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(unverifiedUser as unknown as User);
+        vi.mocked(prisma.user.update).mockResolvedValue(unverifiedUser as unknown as User);
 
         await expect(
           authService.login({
@@ -270,7 +270,7 @@ describe('Auth Service', () => {
           expect.any(String),
         );
       } finally {
-        (env as any).AUTH_REQUIRE_EMAIL_VERIFICATION = originalRequireEmail;
+        Object.assign(env, { AUTH_REQUIRE_EMAIL_VERIFICATION: originalRequireEmail });
       }
     });
   });
@@ -300,12 +300,12 @@ describe('Auth Service', () => {
         emailVerificationToken: null,
       };
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithOtp as any);
-      vi.mocked(prisma.user.update).mockResolvedValue(verifiedUser as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithOtp as unknown as User);
+      vi.mocked(prisma.user.update).mockResolvedValue(verifiedUser as unknown as User);
 
       const result = await authService.verifyEmailOtp('verify@example.com', validOtp);
 
-      expect((result.user as any).isEmailVerified).toBe(true);
+      expect((result.user as unknown as User).isEmailVerified).toBe(true);
       expect(result.tokens).toBeDefined();
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -328,7 +328,7 @@ describe('Auth Service', () => {
         metadata: { emailOtpExpiresAt: pastExpiry },
       };
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithExpiredOtp as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithExpiredOtp as unknown as User);
 
       await expect(
         authService.verifyEmailOtp('expired@example.com', '123456'),
@@ -344,7 +344,7 @@ describe('Auth Service', () => {
         metadata: { emailOtpExpiresAt: new Date(Date.now() + 60000).toISOString() },
       };
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(user as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(user as unknown as User);
 
       await expect(
         authService.verifyEmailOtp('test@example.com', '111111'),
@@ -362,7 +362,7 @@ describe('Auth Service', () => {
 
   describe('logout', () => {
     it('should clear stored refresh token hash', async () => {
-      vi.mocked(prisma.user.update).mockResolvedValue({ id: 'usr_1' } as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({ id: 'usr_1' } as unknown as User);
 
       await authService.logout('usr_1');
 
@@ -382,8 +382,8 @@ describe('Auth Service', () => {
         metadata: {},
       };
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(user as any);
-      vi.mocked(prisma.user.update).mockResolvedValue(user as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(user as unknown as User);
+      vi.mocked(prisma.user.update).mockResolvedValue(user as unknown as User);
 
       const result = await authService.forgotPassword('forgot@example.com');
 
@@ -415,8 +415,8 @@ describe('Auth Service', () => {
         resetOtpExpiresAt: futureExpiry,
       };
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(user as any);
-      vi.mocked(prisma.user.update).mockResolvedValue(user as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(user as unknown as User);
+      vi.mocked(prisma.user.update).mockResolvedValue(user as unknown as User);
 
       await authService.resetPassword({
         email: 'reset@example.com',
@@ -444,7 +444,7 @@ describe('Auth Service', () => {
         resetOtpExpiresAt: new Date(Date.now() + 60000),
       };
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(user as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(user as unknown as User);
 
       await expect(
         authService.resetPassword({

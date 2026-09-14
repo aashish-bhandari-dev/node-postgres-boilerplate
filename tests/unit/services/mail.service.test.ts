@@ -4,13 +4,15 @@ import { IMailTransport, MailSendResult, SendMailOptions } from '../../../src/ty
 
 describe('Mail Service', () => {
   it('should dispatch email verification OTP through the configured transport', async () => {
+    const sendMailMock = vi.fn().mockResolvedValue({
+      success: true,
+      messageId: 'mock-123',
+      recipient: 'test@example.com',
+    } as MailSendResult);
+
     const mockTransport: IMailTransport = {
       name: 'TestMock',
-      sendMail: vi.fn().mockResolvedValue({
-        success: true,
-        messageId: 'mock-123',
-        recipient: 'test@example.com',
-      } as MailSendResult),
+      sendMail: sendMailMock,
     };
 
     const mailService = new MailService(mockTransport);
@@ -23,9 +25,9 @@ describe('Mail Service', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(mockTransport.sendMail).toHaveBeenCalledTimes(1);
+    expect(sendMailMock).toHaveBeenCalledTimes(1);
 
-    const sentOptions = (mockTransport.sendMail as any).mock.calls[0][0] as SendMailOptions;
+    const sentOptions = sendMailMock.mock.calls[0][0] as SendMailOptions;
     expect(sentOptions.to).toBe('test@example.com');
     expect(sentOptions.subject).toContain('849201');
     expect(sentOptions.html).toContain('849201');
@@ -33,13 +35,15 @@ describe('Mail Service', () => {
   });
 
   it('should dispatch password reset code through the configured transport', async () => {
+    const sendMailMock = vi.fn().mockResolvedValue({
+      success: true,
+      messageId: 'mock-456',
+      recipient: 'reset@example.com',
+    } as MailSendResult);
+
     const mockTransport: IMailTransport = {
       name: 'TestMock',
-      sendMail: vi.fn().mockResolvedValue({
-        success: true,
-        messageId: 'mock-456',
-        recipient: 'reset@example.com',
-      } as MailSendResult),
+      sendMail: sendMailMock,
     };
 
     const mailService = new MailService(mockTransport);
@@ -51,9 +55,9 @@ describe('Mail Service', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(mockTransport.sendMail).toHaveBeenCalledTimes(1);
+    expect(sendMailMock).toHaveBeenCalledTimes(1);
 
-    const sentOptions = (mockTransport.sendMail as any).mock.calls[0][0] as SendMailOptions;
+    const sentOptions = sendMailMock.mock.calls[0][0] as SendMailOptions;
     expect(sentOptions.to).toBe('reset@example.com');
     expect(sentOptions.subject).toContain('Reset your password');
     expect(sentOptions.html).toContain('554433');

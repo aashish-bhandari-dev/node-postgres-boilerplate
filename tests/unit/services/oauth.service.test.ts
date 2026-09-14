@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AuthProvider, UserRole } from '@prisma/client';
+import { AuthProvider, UserRole, User } from '@prisma/client';
 import { OAuthService } from '../../../src/services/oauth.service';
 import { IOAuthProvider, OAuthPayloadInput, OAuthUserProfile } from '../../../src/types/oauth.types';
 import { prisma } from '../../../src/config/db';
@@ -67,8 +67,8 @@ describe('OAuth Service', () => {
 
     vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.user.create).mockResolvedValue(mockCreatedUser as any);
-    vi.mocked(prisma.user.update).mockResolvedValue(mockCreatedUser as any);
+    vi.mocked(prisma.user.create).mockResolvedValue(mockCreatedUser as unknown as User);
+    vi.mocked(prisma.user.update).mockResolvedValue(mockCreatedUser as unknown as User);
 
     const oauthService = new OAuthService({ google: mockProvider });
     const result = await oauthService.authenticate('google', { idToken: 'mock_token' });
@@ -114,8 +114,8 @@ describe('OAuth Service', () => {
       emailVerifiedAt: new Date(),
     };
 
-    vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser as any);
-    vi.mocked(prisma.user.update).mockResolvedValue(updatedUser as any);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser as unknown as User);
+    vi.mocked(prisma.user.update).mockResolvedValue(updatedUser as unknown as User);
 
     const mockFbProvider: IOAuthProvider = {
       provider: AuthProvider.FACEBOOK,
@@ -149,7 +149,7 @@ describe('OAuth Service', () => {
       providerId: 'google_deactivated',
     };
 
-    vi.mocked(prisma.user.findFirst).mockResolvedValue(deactivatedUser as any);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(deactivatedUser as unknown as User);
 
     const mockProvider: IOAuthProvider = {
       provider: AuthProvider.GOOGLE,

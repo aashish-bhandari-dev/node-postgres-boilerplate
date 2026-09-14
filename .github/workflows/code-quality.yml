@@ -2,7 +2,6 @@ name: Code Quality & Build
 
 on:
   workflow_dispatch:
-  # Uncomment below to trigger automatically on push / pull request:
   # push:
   #   branches: [main, master, develop]
   # pull_request:

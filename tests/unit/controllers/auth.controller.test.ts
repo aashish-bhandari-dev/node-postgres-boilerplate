@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Request, Response } from 'express';
 import { AuthController } from '../../../src/controllers/auth.controller';
 import { authService } from '../../../src/services/auth.service';
 import { ApiError } from '../../../src/utils/apiError';
@@ -27,7 +28,7 @@ describe('AuthController', () => {
   let controller: AuthController;
 
   const mockRes = () => {
-    const res: any = {};
+    const res = {} as unknown as Response;
     res.status = vi.fn().mockReturnValue(res);
     res.json = vi.fn().mockReturnValue(res);
     res.send = vi.fn().mockReturnValue(res);
@@ -42,16 +43,18 @@ describe('AuthController', () => {
   });
 
   it('register: should call authService.register and respond with 201 Created', async () => {
-    const req: any = {
+    const req = {
       body: {
         email: 'user@example.com',
         password: 'Password123!',
         firstName: 'John',
       },
-    };
+    } as unknown as Request;
     const res = mockRes();
     const mockResult = { user: { id: 'usr_1', email: 'user@example.com' }, tokens: {} };
-    vi.mocked(authService.register).mockResolvedValue(mockResult as any);
+    vi.mocked(authService.register).mockResolvedValue(
+      mockResult as unknown as Awaited<ReturnType<typeof authService.register>>,
+    );
 
     await controller.register(req, res, mockNext);
 
@@ -67,7 +70,7 @@ describe('AuthController', () => {
   });
 
   it('register: should forward errors to next middleware', async () => {
-    const req: any = { body: {} };
+    const req = { body: {} } as unknown as Request;
     const res = mockRes();
     const error = ApiError.conflict('User already exists');
     vi.mocked(authService.register).mockRejectedValue(error);
@@ -78,14 +81,16 @@ describe('AuthController', () => {
   });
 
   it('login: should call authService.login and respond with 200 OK', async () => {
-    const req: any = {
+    const req = {
       body: { identifier: 'user@example.com', password: 'Password123!' },
       ip: '127.0.0.1',
       socket: {},
-    };
+    } as unknown as Request;
     const res = mockRes();
     const mockResult = { user: { id: 'usr_1' }, tokens: { accessToken: 'token' } };
-    vi.mocked(authService.login).mockResolvedValue(mockResult as any);
+    vi.mocked(authService.login).mockResolvedValue(
+      mockResult as unknown as Awaited<ReturnType<typeof authService.login>>,
+    );
 
     await controller.login(req, res, mockNext);
 
@@ -101,10 +106,12 @@ describe('AuthController', () => {
   });
 
   it('refreshToken: should call authService.refreshToken and respond with 200 OK', async () => {
-    const req: any = { body: { refreshToken: 'refresh_token_string' } };
+    const req = { body: { refreshToken: 'refresh_token_string' } } as unknown as Request;
     const res = mockRes();
     const mockTokens = { accessToken: 'new_access', refreshToken: 'new_refresh' };
-    vi.mocked(authService.refreshToken).mockResolvedValue(mockTokens as any);
+    vi.mocked(authService.refreshToken).mockResolvedValue(
+      mockTokens as unknown as Awaited<ReturnType<typeof authService.refreshToken>>,
+    );
 
     await controller.refreshToken(req, res, mockNext);
 
@@ -119,7 +126,7 @@ describe('AuthController', () => {
   });
 
   it('logout: should call authService.logout when authenticated and return 200 OK', async () => {
-    const req: any = { user: { id: 'usr_123' } };
+    const req = { user: { id: 'usr_123' } } as unknown as Request;
     const res = mockRes();
     vi.mocked(authService.logout).mockResolvedValue();
 
@@ -136,7 +143,7 @@ describe('AuthController', () => {
   });
 
   it('logout: should pass ApiError.unauthorized to next when req.user is absent', async () => {
-    const req: any = {};
+    const req = {} as unknown as Request;
     const res = mockRes();
 
     await controller.logout(req, res, mockNext);
@@ -147,9 +154,11 @@ describe('AuthController', () => {
   });
 
   it('verifyEmailOtp: should call authService.verifyEmailOtp and return 200 OK', async () => {
-    const req: any = { body: { email: 'test@example.com', otp: '123456' } };
+    const req = { body: { email: 'test@example.com', otp: '123456' } } as unknown as Request;
     const res = mockRes();
-    vi.mocked(authService.verifyEmailOtp).mockResolvedValue({ success: true } as any);
+    vi.mocked(authService.verifyEmailOtp).mockResolvedValue(
+      { success: true } as unknown as Awaited<ReturnType<typeof authService.verifyEmailOtp>>,
+    );
 
     await controller.verifyEmailOtp(req, res, mockNext);
 
@@ -158,7 +167,7 @@ describe('AuthController', () => {
   });
 
   it('forgotPassword: should call authService.forgotPassword and return 200 OK', async () => {
-    const req: any = { body: { email: 'reset@example.com' } };
+    const req = { body: { email: 'reset@example.com' } } as unknown as Request;
     const res = mockRes();
     vi.mocked(authService.forgotPassword).mockResolvedValue({
       message: 'Reset instructions sent',
@@ -171,13 +180,13 @@ describe('AuthController', () => {
   });
 
   it('resetPassword: should call authService.resetPassword and return 200 OK', async () => {
-    const req: any = {
+    const req = {
       body: {
         email: 'reset@example.com',
         tokenOrOtp: '123456',
         newPassword: 'NewPassword123!',
       },
-    };
+    } as unknown as Request;
     const res = mockRes();
     vi.mocked(authService.resetPassword).mockResolvedValue();
 
@@ -194,7 +203,7 @@ describe('AuthController', () => {
   });
 
   it('getMe: should return authenticated user profile', async () => {
-    const req: any = { user: { id: 'usr_me' } };
+    const req = { user: { id: 'usr_me' } } as unknown as Request;
     const res = mockRes();
     const mockUser = { id: 'usr_me', email: 'me@example.com' };
     vi.mocked(authService.getMe).mockResolvedValue(mockUser);
