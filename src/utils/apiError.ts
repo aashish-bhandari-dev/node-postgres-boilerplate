@@ -44,6 +44,10 @@ export class ApiError extends Error {
     return new ApiError(HttpStatus.CONFLICT, message);
   }
 
+  static locked(message: string, errors?: unknown[]): ApiError {
+    return new ApiError(HttpStatus.LOCKED, message, errors);
+  }
+
   static internal(message = 'Internal Server Error'): ApiError {
     return new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, message, undefined, false);
   }

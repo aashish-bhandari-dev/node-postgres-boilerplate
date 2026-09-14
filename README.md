@@ -141,14 +141,78 @@ The server will start at:
 | `GET` | `/api-docs` | Interactive Swagger UI |
 | `GET` | `/api/v1/health` | Uptime, memory, and PostgreSQL connection ping |
 
-### Users CRUD
+### Authentication & Account Management (`/api/v1/auth`)
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/register` | Register user with email, password, and optional profile | No |
+| `POST` | `/api/v1/auth/login` | Log in via email, username, or phone + password | No |
+| `POST` | `/api/v1/auth/refresh-token` | Rotate JWT access and refresh token pair | No |
+| `POST` | `/api/v1/auth/logout` | Invalidate current refresh token | **Yes (Bearer)** |
+| `POST` | `/api/v1/auth/verify-email` | Verify email address using token | No |
+| `POST` | `/api/v1/auth/resend-verification-email` | Resend email verification token | No |
+| `POST` | `/api/v1/auth/send-phone-otp` | Send 6-digit verification OTP to phone | No |
+| `POST` | `/api/v1/auth/verify-phone` | Verify phone number using 6-digit OTP | No |
+| `POST` | `/api/v1/auth/forgot-password` | Request password reset token / OTP | No |
+| `POST` | `/api/v1/auth/reset-password` | Reset password using token / OTP | No |
+| `GET`  | `/api/v1/auth/me` | Retrieve authenticated user profile | **Yes (Bearer)** |
+| `PATCH`| `/api/v1/auth/me` | Update authenticated user profile | **Yes (Bearer)** |
+| `POST` | `/api/v1/auth/change-password` | Change password for logged in user | **Yes (Bearer)** |
+
+---
+
+### ⚙️ Verification Toggles & Flexibility
+
+The authentication system is built with flexible verification toggles:
+
+#### 1. Global Environment Toggles (`.env`)
+You can globally turn on/off mandatory email and phone verification:
+```env
+# Set to 'true' to require email verification before users can log in
+AUTH_REQUIRE_EMAIL_VERIFICATION=false
+
+# Set to 'true' to require phone verification before users can log in
+AUTH_REQUIRE_PHONE_VERIFICATION=false
+```
+
+#### 2. Route & Middleware Flexibility
+You can protect individual routes or entire routers using the exported middlewares:
+```typescript
+import {
+  authenticate,
+  requireEmailVerified,
+  requirePhoneVerified,
+  requireVerified,
+  authorize
+} from '../middlewares';
+import { UserRole } from '@prisma/client';
+
+// Basic authentication (verifies JWT, user active status, password timestamp)
+router.get('/profile', authenticate(), profileController);
+
+// Require verified email (enforces strictly regardless of .env when enforce: true)
+router.post('/withdraw', authenticate(), requireEmailVerified(true), withdrawController);
+
+// Require verified phone
+router.post('/send-sms', authenticate(), requirePhoneVerified(true), smsController);
+
+// Composite check (require both or individual)
+router.post('/checkout', authenticate(), requireVerified({ email: true, phone: true }), checkoutController);
+
+// Role-based access control
+router.get('/admin/dashboard', authenticate(), authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminController);
+```
+
+---
+
+### Users CRUD (`/api/v1/users`)
 
 | Method | Endpoint | Description | Sample Request Body |
 |---|---|---|---|
-| `POST` | `/api/v1/users` | Create new user | `{"email": "jane@example.com", "name": "Jane", "role": "USER"}` |
+| `POST` | `/api/v1/users` | Create new user | `{"email": "jane@example.com", "firstName": "Jane"}` |
 | `GET` | `/api/v1/users` | List users (paginated) | Query params: `?page=1&limit=10&search=Jane` |
 | `GET` | `/api/v1/users/:id` | Get user by ID | - |
-| `PATCH` | `/api/v1/users/:id` | Update user details | `{"name": "Jane Smith"}` |
+| `PATCH` | `/api/v1/users/:id` | Update user details | `{"firstName": "Jane Smith"}` |
 | `DELETE` | `/api/v1/users/:id` | Delete user | - |
 
 ---

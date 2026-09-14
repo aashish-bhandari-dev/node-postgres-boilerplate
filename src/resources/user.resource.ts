@@ -1,4 +1,5 @@
 import { JsonResource } from './base.resource';
+import { Prisma } from '@prisma/client';
 
 export interface UserResourceData {
   id: string;
@@ -23,7 +24,7 @@ export interface UserResourceData {
   phoneVerifiedAt?: Date | string | null;
   provider: string;
   lastLoginAt?: Date | string | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: Prisma.JsonValue | null;
   createdAt: Date | string;
   updatedAt?: Date | string;
 }
