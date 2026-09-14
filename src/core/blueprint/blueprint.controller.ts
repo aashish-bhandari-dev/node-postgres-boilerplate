@@ -19,6 +19,9 @@ export class BaseBlueprintController<TService extends BaseBlueprintService = Bas
 
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const host = req.get('host');
+      const baseUrl = host ? `${req.protocol}://${host}${req.originalUrl}` : req.originalUrl;
+
       const queryOptions: BlueprintQueryOptions = {
         page: req.query.page ? Number(req.query.page) : undefined,
         limit: req.query.limit ? Number(req.query.limit) : undefined,
@@ -26,6 +29,7 @@ export class BaseBlueprintController<TService extends BaseBlueprintService = Bas
         sortBy: req.query.sortBy as string | undefined,
         sortOrder: req.query.sortOrder as 'asc' | 'desc' | undefined,
         filter: req.query.filter as Record<string, unknown> | undefined,
+        baseUrl,
       };
 
       const result = await this.service.getAll(queryOptions);

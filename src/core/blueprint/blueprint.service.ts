@@ -168,6 +168,28 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
     ]);
 
     const totalPages = Math.ceil(total / limit);
+    const from = total === 0 || skip >= total ? 0 : skip + 1;
+    const to = total === 0 || skip >= total ? 0 : Math.min(total, skip + items.length);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1 && (totalPages === 0 || page <= totalPages + 1);
+
+    const buildUrl = (targetPage: number): string => {
+      const defaultPath = this.config.path ? `/${this.config.path}` : `/${this.modelName}s`;
+      const base = options.baseUrl || defaultPath;
+      try {
+        const dummyBase = 'http://localhost';
+        const isAbsolute = base.startsWith('http://') || base.startsWith('https://');
+        const url = new URL(base, dummyBase);
+        url.searchParams.set('page', String(targetPage));
+        url.searchParams.set('limit', String(limit));
+        return isAbsolute ? url.toString() : `${url.pathname}${url.search}`;
+      } catch {
+        return `${defaultPath}?page=${targetPage}&limit=${limit}`;
+      }
+    };
+
+    const nextPageUrl = hasNextPage ? buildUrl(page + 1) : null;
+    const prevPageUrl = hasPrevPage ? buildUrl(page - 1) : null;
     const transformedItems = items.map((item) => this.transformItem(item)) as TModel[];
 
     return {
@@ -177,8 +199,12 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
         page,
         limit,
         totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+        from,
+        to,
+        hasNextPage,
+        hasPrevPage,
+        nextPageUrl,
+        prevPageUrl,
       },
     };
   }

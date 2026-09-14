@@ -18,7 +18,11 @@ export interface PaginatedResult<T> {
     page: number;
     limit: number;
     totalPages: number;
+    from: number;
+    to: number;
     hasNextPage: boolean;
     hasPrevPage: boolean;
+    nextPageUrl: string | null;
+    prevPageUrl: string | null;
   };
 }

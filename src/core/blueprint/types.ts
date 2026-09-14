@@ -8,6 +8,7 @@ export interface BlueprintQueryOptions {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   filter?: Record<string, unknown>;
+  baseUrl?: string;
 }
 
 export interface BlueprintHooks<T = Record<string, unknown>> {

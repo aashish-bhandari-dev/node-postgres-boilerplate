@@ -204,12 +204,24 @@ export function generateBlueprintSwagger(modules: Blueprint[]): BlueprintSwagger
     PaginationMeta: {
       type: 'object',
       properties: {
-        total: { type: 'integer', example: 50 },
+        total: { type: 'integer', example: 45 },
         page: { type: 'integer', example: 1 },
         limit: { type: 'integer', example: 10 },
         totalPages: { type: 'integer', example: 5 },
+        from: { type: 'integer', example: 1 },
+        to: { type: 'integer', example: 10 },
         hasNextPage: { type: 'boolean', example: true },
         hasPrevPage: { type: 'boolean', example: false },
+        nextPageUrl: {
+          type: 'string',
+          nullable: true,
+          example: 'http://localhost:5000/api/v1/users?page=2&limit=10',
+        },
+        prevPageUrl: {
+          type: 'string',
+          nullable: true,
+          example: null,
+        },
       },
     },
   };
