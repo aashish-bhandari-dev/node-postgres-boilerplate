@@ -1,5 +1,38 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { AnyZodObject } from 'zod';
+import { PermissionString } from '../../constants/permissions';
+
+export interface BlueprintPermissionsConfig {
+  /**
+   * If true, applies authenticate() before permission checks. Defaults to true if permissions are configured.
+   */
+  requireAuth?: boolean;
+
+  /**
+   * Permission required for listing records (GET /)
+   */
+  list?: PermissionString;
+
+  /**
+   * Permission required for getting a single record (GET /:id)
+   */
+  get?: PermissionString;
+
+  /**
+   * Permission required for creating a record (POST /)
+   */
+  create?: PermissionString;
+
+  /**
+   * Permission required for updating a record (PATCH /:id)
+   */
+  update?: PermissionString;
+
+  /**
+   * Permission required for deleting a record (DELETE /:id)
+   */
+  delete?: PermissionString;
+}
 
 export interface BlueprintQueryOptions {
   page?: number;
@@ -76,6 +109,11 @@ export interface BlueprintConfig<TModel = Record<string, unknown>> {
    * Middleware applied to all routes in this blueprint (e.g. auth, role check)
    */
   middlewares?: RequestHandler[];
+
+  /**
+   * Declarative RBAC permissions per CRUD action
+   */
+  permissions?: BlueprintPermissionsConfig;
 
   /**
    * Lifecycle hooks

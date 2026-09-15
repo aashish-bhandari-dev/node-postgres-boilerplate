@@ -1,5 +1,6 @@
 import { JsonResource } from './base.resource';
 import { Prisma } from '@prisma/client';
+import { getUserPermissions } from '../utils/rbac.util';
 
 export interface UserResourceData {
   id: string;
@@ -59,6 +60,10 @@ export class UserResource extends JsonResource<UserResourceData> {
       isPhoneVerified: this.resource.isPhoneVerified,
       phoneVerifiedAt: this.resource.phoneVerifiedAt ?? null,
       provider: this.resource.provider,
+      permissions: getUserPermissions({
+        role: this.resource.role,
+        metadata: this.resource.metadata,
+      }),
       lastLoginAt: this.resource.lastLoginAt ?? null,
       metadata: this.resource.metadata ?? {},
       createdAt: this.resource.createdAt,

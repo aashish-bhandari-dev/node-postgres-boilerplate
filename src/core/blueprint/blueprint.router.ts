@@ -2,6 +2,8 @@ import { Router, RequestHandler } from 'express';
 import { BaseBlueprintController } from './blueprint.controller';
 import { BlueprintConfig } from './types';
 import { validateRequest } from '../../middlewares/validate.middleware';
+import { authenticate } from '../../middlewares/auth.middleware';
+import { requirePermission } from '../../middlewares/rbac.middleware';
 
 export function createBlueprintRouter(
   config: BlueprintConfig,
@@ -15,28 +17,64 @@ export function createBlueprintRouter(
     router.use(...config.middlewares);
   }
 
-  // Create validation middlewares if schemas are provided
+  // Base authentication middleware for permissions if enabled (defaults to true if permissions are set)
+  const authMiddleware: RequestHandler[] =
+    config.permissions && config.permissions.requireAuth !== false
+      ? [authenticate()]
+      : [];
+
+  // Route-specific permission middlewares
+  const listMiddlewares: RequestHandler[] = [];
+  if (config.permissions?.list) {
+    listMiddlewares.push(...authMiddleware, requirePermission(config.permissions.list));
+  }
+
+  const getMiddlewares: RequestHandler[] = [];
+  if (config.permissions?.get) {
+    getMiddlewares.push(...authMiddleware, requirePermission(config.permissions.get));
+  }
+
   const createMiddlewares: RequestHandler[] = [];
+  if (config.permissions?.create) {
+    createMiddlewares.push(
+      ...authMiddleware,
+      requirePermission(config.permissions.create),
+    );
+  }
   if (config.validation?.create) {
     createMiddlewares.push(validateRequest(config.validation.create));
   }
 
   const updateMiddlewares: RequestHandler[] = [];
+  if (config.permissions?.update) {
+    updateMiddlewares.push(
+      ...authMiddleware,
+      requirePermission(config.permissions.update),
+    );
+  }
   if (config.validation?.update) {
     updateMiddlewares.push(validateRequest(config.validation.update));
+  }
+
+  const deleteMiddlewares: RequestHandler[] = [];
+  if (config.permissions?.delete) {
+    deleteMiddlewares.push(
+      ...authMiddleware,
+      requirePermission(config.permissions.delete),
+    );
   }
 
   // Base Blueprint routes
   router
     .route('/')
-    .get(controller.getAll)
+    .get(...listMiddlewares, controller.getAll)
     .post(...createMiddlewares, controller.create);
 
   router
     .route('/:id')
-    .get(controller.getById)
+    .get(...getMiddlewares, controller.getById)
     .patch(...updateMiddlewares, controller.update)
-    .delete(controller.delete);
+    .delete(...deleteMiddlewares, controller.delete);
 
   // Allow custom route extensions
   if (extendRouter) {
