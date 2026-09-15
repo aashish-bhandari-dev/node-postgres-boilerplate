@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { AnyZodObject } from 'zod';
 import { PermissionString } from '../../constants/permissions';
+import { UserAuthContext } from '../../utils/rbac.util';
 
 export interface BlueprintPermissionsConfig {
   /**
@@ -34,6 +35,19 @@ export interface BlueprintPermissionsConfig {
   delete?: PermissionString;
 }
 
+export interface BlueprintPolicyConfig {
+  /**
+   * The subject name for ABAC policy evaluation (e.g. 'User', 'Article')
+   */
+  subject?: string;
+
+  /**
+   * Row-level security scope filter: dynamically injects query where-clause conditions based on user attributes.
+   * e.g., (user) => (user?.role === 'USER' ? { authorId: user.id } : {})
+   */
+  scope?: (user?: UserAuthContext | null) => Record<string, unknown>;
+}
+
 export interface BlueprintQueryOptions {
   page?: number;
   limit?: number;
@@ -42,6 +56,7 @@ export interface BlueprintQueryOptions {
   sortOrder?: 'asc' | 'desc';
   filter?: Record<string, unknown>;
   baseUrl?: string;
+  user?: UserAuthContext | null;
 }
 
 export interface BlueprintHooks<T = Record<string, unknown>> {
@@ -114,6 +129,11 @@ export interface BlueprintConfig<TModel = Record<string, unknown>> {
    * Declarative RBAC permissions per CRUD action
    */
   permissions?: BlueprintPermissionsConfig;
+
+  /**
+   * Optional ABAC Policy and Row-Level Security configuration
+   */
+  policy?: BlueprintPolicyConfig;
 
   /**
    * Lifecycle hooks

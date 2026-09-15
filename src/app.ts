@@ -10,7 +10,11 @@ import { requestLogger } from './middlewares/requestLogger.middleware';
 import { apiRateLimiter } from './middlewares/rateLimiter.middleware';
 import { notFoundHandler } from './middlewares/notFound.middleware';
 import { errorHandler } from './middlewares/error.middleware';
+import { initializePolicies } from './core/policy';
 import apiRoutes from './routes';
+
+// Initialize ABAC / RBAC policies
+initializePolicies();
 
 const app: Application = express();
 

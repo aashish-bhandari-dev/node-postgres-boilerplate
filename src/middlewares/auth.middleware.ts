@@ -212,7 +212,7 @@ export const requireVerified = (options: RequireVerifiedOptions = {}) => {
   };
 };
 
-// Re-export RBAC middlewares for unified auth imports
+// Re-export RBAC & ABAC middlewares for unified auth imports
 export {
   requirePermission,
   requireAnyPermission,
@@ -221,3 +221,5 @@ export {
   requireOwnerOrPermission,
   type OwnerOrPermissionOptions,
 } from './rbac.middleware';
+
+export { requirePolicy, type PolicyMiddlewareOptions } from './policy.middleware';

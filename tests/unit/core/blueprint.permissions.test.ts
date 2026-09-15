@@ -117,4 +117,52 @@ describe('Blueprint Declarative Permissions', () => {
 
     expect(next).toHaveBeenCalledWith();
   });
+
+  it('should apply ABAC row-level security scope filter in blueprint service', async () => {
+    const mockDelegate = {
+      count: vi.fn().mockResolvedValue(1),
+      findMany: vi.fn().mockResolvedValue([{ id: 'art-1', authorId: 'usr-1' }]),
+      findUnique: vi.fn().mockResolvedValue({ id: 'art-1', authorId: 'usr-1' }),
+      findFirst: vi.fn().mockResolvedValue({ id: 'art-1', authorId: 'usr-1' }),
+    };
+
+    class TestService extends BaseBlueprintService {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      protected override get delegate(): any {
+        return mockDelegate;
+      }
+    }
+
+
+    const scopedService = new TestService('article', {
+      model: 'article',
+      policy: {
+        scope: (user) => (user?.role === UserRole.USER ? { authorId: user.id } : {}),
+      },
+    });
+
+    // 1. When regular user queries, where clause includes { authorId: user.id }
+    await scopedService.getAll({
+      user: { id: 'usr-1', role: UserRole.USER },
+    });
+
+    expect(mockDelegate.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ authorId: 'usr-1' }),
+      }),
+    );
+
+    // 2. When admin queries, where clause does NOT restrict by authorId
+    mockDelegate.findMany.mockClear();
+    await scopedService.getAll({
+      user: { id: 'admin-1', role: UserRole.ADMIN },
+    });
+
+    expect(mockDelegate.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {},
+      }),
+    );
+  });
 });
+

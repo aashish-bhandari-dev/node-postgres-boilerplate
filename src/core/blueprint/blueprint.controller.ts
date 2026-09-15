@@ -34,6 +34,7 @@ export class BaseBlueprintController<
         sortOrder: req.query.sortOrder as 'asc' | 'desc' | undefined,
         filter: req.query.filter as Record<string, unknown> | undefined,
         baseUrl,
+        user: req.user,
       };
 
       const result = await this.service.getAll(queryOptions);
@@ -50,7 +51,7 @@ export class BaseBlueprintController<
 
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const record = await this.service.getById(req.params.id);
+      const record = await this.service.getById(req.params.id, { user: req.user });
       ApiResponse.success(res, 'Record retrieved successfully', record);
     } catch (error) {
       next(error);

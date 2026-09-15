@@ -2,11 +2,13 @@ import { prisma } from '../../config/db';
 import { ApiError } from '../../utils/apiError';
 import { PaginatedResult } from '../../types';
 import { BlueprintQueryOptions, BlueprintConfig } from './types';
+import { UserAuthContext } from '../../utils/rbac.util';
 
 interface GenericPrismaDelegate {
   count(args?: Record<string, unknown>): Promise<number>;
   findMany(args?: Record<string, unknown>): Promise<unknown[]>;
   findUnique(args: Record<string, unknown>): Promise<unknown>;
+  findFirst?(args: Record<string, unknown>): Promise<unknown>;
   create(args: Record<string, unknown>): Promise<unknown>;
   update(args: Record<string, unknown>): Promise<unknown>;
   delete(args: Record<string, unknown>): Promise<unknown>;
@@ -148,9 +150,18 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
       }
     }
 
+    // Apply ABAC row-level security scope filter if configured
+    if (this.config.policy?.scope) {
+      const scopeFilter = this.config.policy.scope(options.user);
+      if (scopeFilter && typeof scopeFilter === 'object') {
+        Object.assign(where, scopeFilter);
+      }
+    }
+
     // Sorting
     const sortBy = options.sortBy || this.config.defaultSort?.field || 'createdAt';
     const sortOrder = options.sortOrder || this.config.defaultSort?.order || 'desc';
+
     const orderBy = { [sortBy]: sortOrder };
 
     const queryArgs: Record<string, unknown> = {
@@ -218,10 +229,23 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
   /**
    * Get single record by ID
    */
-  async getById(rawId: string): Promise<TModel> {
+  async getById(
+    rawId: string,
+    options: { user?: UserAuthContext | null } = {},
+  ): Promise<TModel> {
     const id = this.parseId(rawId);
+    const where: Record<string, unknown> = { id };
+
+    // Apply ABAC row-level security scope filter if configured
+    if (this.config.policy?.scope) {
+      const scopeFilter = this.config.policy.scope(options.user);
+      if (scopeFilter && typeof scopeFilter === 'object') {
+        Object.assign(where, scopeFilter);
+      }
+    }
+
     const queryArgs: Record<string, unknown> = {
-      where: { id },
+      where,
     };
 
     if (this.config.include) {
@@ -230,7 +254,13 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
       queryArgs.select = this.config.select;
     }
 
-    const record = await this.delegate.findUnique(queryArgs);
+    const hasMultipleFilters = Object.keys(where).length > 1;
+    const findMethod =
+      hasMultipleFilters && typeof this.delegate.findFirst === 'function'
+        ? this.delegate.findFirst.bind(this.delegate)
+        : this.delegate.findUnique.bind(this.delegate);
+
+    const record = await findMethod(queryArgs);
     if (!record) {
       throw ApiError.notFound(`${this.modelName} with ID '${rawId}' not found`);
     }
