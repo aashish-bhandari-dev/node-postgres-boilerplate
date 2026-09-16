@@ -1,9 +1,10 @@
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../constants/roles';
 
 export interface JwtUserPayload {
   userId: string;
   email: string;
-  role: UserRole;
+  role: UserRole | string;
+  roleId?: string;
 }
 
 export interface AccessTokenPayload extends JwtUserPayload {

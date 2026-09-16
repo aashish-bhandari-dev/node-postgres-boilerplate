@@ -15,7 +15,14 @@ export interface UserResourceData {
   dateOfBirth?: Date | string | null;
   locale?: string;
   timezone?: string;
-  role: string;
+  role?: string | { name: string; [key: string]: unknown };
+  hasCustomPermissions?: boolean;
+  userPermissions?: Array<{
+    isGranted: boolean;
+    permission?: { name: string } | null;
+    permissionName?: string;
+  }>;
+  permissions?: string[];
   isActive: boolean;
   isDeactivated: boolean;
   deletedAt?: Date | string | null;
@@ -52,7 +59,11 @@ export class UserResource extends JsonResource<UserResourceData> {
       dateOfBirth: this.resource.dateOfBirth ?? null,
       locale: this.resource.locale ?? 'en',
       timezone: this.resource.timezone ?? 'UTC',
-      role: this.resource.role,
+      role:
+        typeof this.resource.role === 'object' && this.resource.role !== null
+          ? (this.resource.role as any).name
+          : this.resource.role,
+      hasCustomPermissions: this.resource.hasCustomPermissions ?? false,
       isActive: this.resource.isActive,
       isDeactivated: this.resource.isDeactivated,
       isEmailVerified: this.resource.isEmailVerified,
@@ -60,10 +71,18 @@ export class UserResource extends JsonResource<UserResourceData> {
       isPhoneVerified: this.resource.isPhoneVerified,
       phoneVerifiedAt: this.resource.phoneVerifiedAt ?? null,
       provider: this.resource.provider,
-      permissions: getUserPermissions({
-        role: this.resource.role,
-        metadata: this.resource.metadata,
-      }),
+      permissions:
+        this.resource.permissions ??
+         getUserPermissions({
+           id: this.resource.id,
+           role:
+             typeof this.resource.role === 'object' && this.resource.role !== null
+               ? (this.resource.role as any).name
+               : (this.resource.role ?? ''),
+           hasCustomPermissions: this.resource.hasCustomPermissions,
+           userPermissions: this.resource.userPermissions,
+           metadata: this.resource.metadata,
+         }),
       lastLoginAt: this.resource.lastLoginAt ?? null,
       metadata: this.resource.metadata ?? {},
       createdAt: this.resource.createdAt,

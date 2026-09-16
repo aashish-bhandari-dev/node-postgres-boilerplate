@@ -60,7 +60,7 @@ export class BaseBlueprintController<
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const record = await this.service.create(req.body);
+      const record = await this.service.create(req.body, { user: req.user });
       ApiResponse.created(res, 'Record created successfully', record);
     } catch (error) {
       next(error);
@@ -69,7 +69,9 @@ export class BaseBlueprintController<
 
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const record = await this.service.update(req.params.id, req.body);
+      const record = await this.service.update(req.params.id, req.body, {
+        user: req.user,
+      });
       ApiResponse.success(res, 'Record updated successfully', record);
     } catch (error) {
       next(error);
@@ -78,7 +80,7 @@ export class BaseBlueprintController<
 
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      await this.service.delete(req.params.id);
+      await this.service.delete(req.params.id, { user: req.user });
       ApiResponse.success(res, 'Record deleted successfully');
     } catch (error) {
       next(error);

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const userRoleEnum = z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER']);
+const userRoleEnum = z.string().min(1, 'Role name is required');
 const authProviderEnum = z.enum(['LOCAL', 'GOOGLE', 'APPLE', 'GITHUB', 'FACEBOOK']);
 
 export const createUserSchema = z.object({

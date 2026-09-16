@@ -1,4 +1,4 @@
-import { AuthProvider, UserRole } from '@prisma/client';
+import { AuthProvider } from '@prisma/client';
 import { prisma } from '../config/db';
 import { ApiError } from '../utils/apiError';
 import { logger } from '../utils/logger';
@@ -67,6 +67,7 @@ export class OAuthService {
         ],
         deletedAt: null,
       },
+      include: { role: true },
     });
 
     if (user) {
@@ -96,6 +97,7 @@ export class OAuthService {
               image: profile.image,
             }),
           },
+          include: { role: true },
         });
       }
     } else {
@@ -116,7 +118,7 @@ export class OAuthService {
           email: profile.email,
           image: profile.image,
           password: null, // OAuth-only account
-          role: UserRole.USER,
+          role: { connect: { name: 'USER' } },
           provider: profile.provider,
           providerId: profile.providerId,
           isEmailVerified: profile.isEmailVerified,
@@ -124,6 +126,7 @@ export class OAuthService {
           isActive: true,
           isDeactivated: false,
         },
+        include: { role: true },
       });
 
       logger.info(
@@ -133,14 +136,14 @@ export class OAuthService {
 
     // Generate JWT access & refresh token pair
     const tokens = generateAuthTokens({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
+      userId: user!.id,
+      email: user!.email,
+      role: typeof user!.role === 'object' && user!.role !== null ? (user!.role as any).name : user!.role,
     });
 
     // Update session tracking and refresh token hash
     const updatedUser = await prisma.user.update({
-      where: { id: user.id },
+      where: { id: user!.id },
       data: {
         failedLoginAttempts: 0,
         lockoutUntil: null,
@@ -148,6 +151,7 @@ export class OAuthService {
         lastLoginIp: ip ?? null,
         refreshTokenHash: hashToken(tokens.refreshToken),
       },
+      include: { role: true },
     });
 
     return {

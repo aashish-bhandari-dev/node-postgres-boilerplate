@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Request, Response } from 'express';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../src/constants/roles';
 import { createBlueprintRouter } from '../../../src/core/blueprint/blueprint.router';
 import { BaseBlueprintController } from '../../../src/core/blueprint/blueprint.controller';
 import { BaseBlueprintService } from '../../../src/core/blueprint/blueprint.service';

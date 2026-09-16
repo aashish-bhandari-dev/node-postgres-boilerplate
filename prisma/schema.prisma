@@ -10,11 +10,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  MANAGER
-  USER
+model Role {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String           @unique
+  displayName     String
+  description     String?
+  hierarchy       Int              @default(10)
+  isSystem        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@index([name])
+  @@index([hierarchy])
+  @@map("roles")
 }
 
 enum AuthProvider {
@@ -26,26 +36,29 @@ enum AuthProvider {
 }
 
 model User {
-  id          String    @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
   // Basic Profile Info
   firstName   String
   lastName    String?
   username    String?   @unique
   email       String    @unique
-  password    String?   // Nullable for OAuth-only users
+  password    String? // Nullable for OAuth-only users
   phone       String?   @unique
-  image       String?   // Profile / avatar image URL
+  image       String? // Profile / avatar image URL
   bio         String?
   gender      String?
   dateOfBirth DateTime?
 
   // Localization & Preferences
-  locale      String    @default("en")
-  timezone    String    @default("UTC")
+  locale   String @default("en")
+  timezone String @default("UTC")
 
   // Authorization & Roles
-  role        UserRole  @default(USER)
+  roleId               String           @db.Uuid
+  role                 Role             @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  hasCustomPermissions Boolean          @default(false)
+  userPermissions      UserPermission[]
 
   // Account Lifecycle & Status
   isActive      Boolean   @default(true)
@@ -57,40 +70,88 @@ model User {
   emailVerifiedAt        DateTime?
   emailVerificationToken String?
 
-  isPhoneVerified        Boolean   @default(false)
-  phoneVerifiedAt        DateTime?
+  isPhoneVerified Boolean   @default(false)
+  phoneVerifiedAt DateTime?
 
   // OAuth / Social Providers
-  provider      AuthProvider @default(LOCAL)
-  providerId    String?
+  provider   AuthProvider @default(LOCAL)
+  providerId String?
 
   // Security & Authentication Tracking
-  passwordChangedAt    DateTime?
-  failedLoginAttempts  Int       @default(0)
-  lockoutUntil         DateTime?
-  refreshTokenHash     String?
+  passwordChangedAt   DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockoutUntil        DateTime?
+  refreshTokenHash    String?
 
   // Password Reset / OTP
   resetOtpHash      String?
   resetOtpExpiresAt DateTime?
 
   // Session & Activity Auditing
-  lastLoginAt   DateTime?
-  lastLoginIp   String?
+  lastLoginAt DateTime?
+  lastLoginIp String?
 
   // Extensible Custom Metadata (Notification settings, preferences, app-specific flags)
-  metadata      Json?     @default("{}")
+  metadata Json? @default("{}")
 
   // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([phone])
-  @@index([role])
+  @@index([roleId])
+  @@index([hasCustomPermissions])
   @@index([isActive])
   @@index([isEmailVerified])
   @@index([provider, providerId])
   @@index([deletedAt])
   @@map("users")
+}
+
+model Permission {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String           @unique
+  displayName     String
+  description     String?
+  module          String
+  action          String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  rolePermissions RolePermission[]
+  userPermissions UserPermission[]
+
+  @@index([module])
+  @@index([name])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid()) @db.Uuid
+  roleId       String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String     @db.Uuid
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserPermission {
+  id           String     @id @default(uuid()) @db.Uuid
+  userId       String     @db.Uuid
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionId String     @db.Uuid
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  isGranted    Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
+  @@map("user_permissions")
 }

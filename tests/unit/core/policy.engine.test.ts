@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../src/constants/roles';
 import { definePolicy, PolicyRegistry } from '../../../src/core/policy/policy.registry';
 import { can, cannot, authorizePolicy } from '../../../src/core/policy/policy.engine';
 

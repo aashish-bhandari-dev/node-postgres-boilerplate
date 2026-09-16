@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AuthProvider, UserRole, User } from '@prisma/client';
+import { AuthProvider, User } from '@prisma/client';
+import { UserRole } from '../../../src/constants/roles';
 import { OAuthService } from '../../../src/services/oauth.service';
 import { IOAuthProvider, OAuthPayloadInput, OAuthUserProfile } from '../../../src/types/oauth.types';
 import { prisma } from '../../../src/config/db';

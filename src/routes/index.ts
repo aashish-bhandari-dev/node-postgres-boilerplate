@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import healthRoutes from './health.routes';
 import authRoutes from './auth.routes';
+import permissionRoutes from './permission.routes';
+import roleRoutes from './role.routes';
 import { modules } from '../modules';
 import { ApiResponse } from '../utils/apiResponse';
 
@@ -11,6 +13,12 @@ router.use('/health', healthRoutes);
 
 // Authentication & Account Management
 router.use('/auth', authRoutes);
+
+// Permission Management & Catalog
+router.use('/permissions', permissionRoutes);
+
+// Role Management
+router.use('/roles', roleRoutes);
 
 // Dynamically mount all registered blueprint modules
 for (const mod of modules) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../src/constants/roles';
 import { Permission } from '../../../src/constants/permissions';
 import {
   matchesPermission,
@@ -110,6 +110,67 @@ describe('RBAC Utility', () => {
         metadata: { permissions: [Permission.USERS_DELETE] },
       };
       expect(hasPermission(user, Permission.USERS_DELETE)).toBe(true);
+    });
+
+    it('should grant user custom permissions via userPermissions records', () => {
+      const user = {
+        role: UserRole.USER,
+        hasCustomPermissions: true,
+        userPermissions: [
+          { isGranted: true, permissionName: Permission.USERS_CREATE },
+        ],
+      };
+      expect(hasPermission(user, Permission.USERS_CREATE)).toBe(true);
+    });
+
+    it('should deny a permission for a MANAGER when explicitly revoked (use case: view-only manager)', () => {
+      // Standard MANAGER has USERS_READ, USERS_UPDATE, SETTINGS_READ, AUDIT_READ
+      const restrictedManager = {
+        role: UserRole.MANAGER,
+        hasCustomPermissions: true,
+        userPermissions: [
+          { isGranted: true, permissionName: Permission.USERS_READ },
+          { isGranted: false, permissionName: Permission.USERS_UPDATE },
+          { isGranted: false, permissionName: Permission.SETTINGS_READ },
+          { isGranted: false, permissionName: Permission.AUDIT_READ },
+        ],
+      };
+
+      // Can read users
+      expect(hasPermission(restrictedManager, Permission.USERS_READ)).toBe(true);
+
+      // Cannot update users, read settings, or read audit logs
+      expect(hasPermission(restrictedManager, Permission.USERS_UPDATE)).toBe(false);
+      expect(hasPermission(restrictedManager, Permission.SETTINGS_READ)).toBe(false);
+      expect(hasPermission(restrictedManager, Permission.AUDIT_READ)).toBe(false);
+    });
+
+    it('should enforce explicit deny even if role has wildcard', () => {
+      const restrictedAdmin = {
+        role: UserRole.ADMIN, // Admin has USERS_MANAGE (users:*)
+        hasCustomPermissions: true,
+        userPermissions: [
+          { isGranted: false, permissionName: Permission.USERS_DELETE },
+        ],
+      };
+
+      // Can still read and update users via wildcard
+      expect(hasPermission(restrictedAdmin, Permission.USERS_READ)).toBe(true);
+      expect(hasPermission(restrictedAdmin, Permission.USERS_UPDATE)).toBe(true);
+
+      // But explicitly denied USERS_DELETE
+      expect(hasPermission(restrictedAdmin, Permission.USERS_DELETE)).toBe(false);
+    });
+
+    it('should use precalculated permissions fast-path when present', () => {
+      const user = {
+        role: UserRole.USER,
+        permissions: [Permission.USERS_READ, 'custom:special'],
+      };
+
+      expect(hasPermission(user, 'custom:special')).toBe(true);
+      expect(hasPermission(user, Permission.USERS_READ)).toBe(true);
+      expect(hasPermission(user, Permission.USERS_DELETE)).toBe(false);
     });
 
     it('should return false for null user', () => {

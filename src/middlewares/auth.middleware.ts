@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../constants/roles';
 import { prisma } from '../config/db';
 import { env } from '../config/env';
 import { ApiError } from '../utils/apiError';
 import { HttpStatus } from '../constants/httpStatus';
 import { verifyAccessToken } from '../utils/token.util';
 import { AuthenticateOptions, RequireVerifiedOptions } from '../types/auth.types';
+import { getUserPermissions } from '../utils/rbac.util';
 
 /**
  * Authentication Middleware
@@ -39,6 +40,17 @@ export const authenticate = (options?: AuthenticateOptions) => {
       // Fetch user from database
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
+        include: {
+          role: {
+            include: {
+              rolePermissions: {
+                include: {
+                  permission: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!user || user.deletedAt) {
@@ -84,7 +96,48 @@ export const authenticate = (options?: AuthenticateOptions) => {
         );
       }
 
-      req.user = user;
+      // Fast-path: only query user_permissions if user has custom permissions flag enabled
+      let userPermissions;
+      if (user.hasCustomPermissions) {
+        userPermissions = await prisma.userPermission.findMany({
+          where: { userId: user.id },
+          include: { permission: true },
+        });
+      }
+
+      const roleName =
+        (user.role as { name?: string })?.name ??
+        (user as unknown as { role?: string }).role ??
+        'USER';
+      const rolePermissions =
+        (
+          user.role as {
+            rolePermissions?: Array<{ permission: { name: string } }>;
+          }
+        )?.rolePermissions?.map((rp) => rp.permission.name) ?? [];
+      const roleHierarchy = (user.role as { hierarchy?: number })?.hierarchy;
+
+      const effectiveUser = {
+        ...user,
+        role: roleName,
+        roleId: user.roleId ?? (user.role as { id?: string })?.id,
+        roleRecord: user.role,
+        roleHierarchy,
+        rolePermissions,
+        userPermissions,
+        permissions: getUserPermissions({
+          id: user.id,
+          role: roleName,
+          roleId: user.roleId ?? (user.role as { id?: string })?.id,
+          roleHierarchy,
+          rolePermissions,
+          hasCustomPermissions: user.hasCustomPermissions,
+          userPermissions,
+          metadata: user.metadata,
+        }),
+      };
+
+      req.user = effectiveUser as unknown as typeof req.user;
       req.tokenPayload = payload;
 
       next();
@@ -98,16 +151,17 @@ export const authenticate = (options?: AuthenticateOptions) => {
  * Role-based authorization middleware.
  * Usage: router.get('/admin', authenticate(), authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), handler);
  */
-export const authorize = (...allowedRoles: UserRole[]) => {
+export const authorize = (...allowedRoles: (UserRole | string)[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
       return next(ApiError.unauthorized('Authentication required'));
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const userRole = req.user.roleName ?? (typeof req.user.role === 'object' && req.user.role !== null ? req.user.role.name : String(req.user.role ?? ''));
+    if (!allowedRoles.includes(userRole)) {
       return next(
         ApiError.forbidden(
-          `Forbidden: Role '${req.user.role}' does not have permission to access this resource`,
+          `Forbidden: Role '${userRole}' does not have permission to access this resource`,
         ),
       );
     }

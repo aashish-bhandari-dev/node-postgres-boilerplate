@@ -1,4 +1,4 @@
-import { UserRole, AuthProvider, Prisma } from '@prisma/client';
+import { AuthProvider, Prisma } from '@prisma/client';
 import { prisma } from '../config/db';
 import { env } from '../config/env';
 import { ApiError } from '../utils/apiError';
@@ -84,7 +84,7 @@ export class AuthService {
         phone: input.phone ? input.phone.trim() : null,
         locale: input.locale || 'en',
         timezone: input.timezone || 'UTC',
-        role: UserRole.USER,
+        role: { connect: { name: 'USER' } },
         provider: AuthProvider.LOCAL,
         isEmailVerified: false,
         emailVerificationToken: storedVerificationToken,
@@ -93,6 +93,7 @@ export class AuthService {
         isDeactivated: false,
         metadata: emailOtpExpiresAt ? { emailOtpExpiresAt } : {},
       },
+      include: { role: true },
     });
 
     logger.info(`[Auth] Registered new user: ${user.email} (ID: ${user.id})`);
@@ -131,7 +132,7 @@ export class AuthService {
     const tokens = generateAuthTokens({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: typeof user.role === 'object' && user.role !== null ? (user.role as any).name : user.role,
     });
 
     // Save refresh token hash
@@ -169,6 +170,7 @@ export class AuthService {
         ],
         deletedAt: null,
       },
+      include: { role: true },
     });
 
     if (!user) {
@@ -292,7 +294,7 @@ export class AuthService {
     const tokens = generateAuthTokens({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: typeof user.role === 'object' && user.role !== null ? (user.role as any).name : user.role,
     });
 
     // Reset failed attempts, update last login, and store refresh token hash
@@ -328,6 +330,7 @@ export class AuthService {
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
+      include: { role: true },
     });
 
     if (
@@ -346,7 +349,7 @@ export class AuthService {
     const newTokens = generateAuthTokens({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: typeof user.role === 'object' && user.role !== null ? (user.role as any).name : user.role,
     });
 
     await prisma.user.update({
@@ -524,6 +527,7 @@ export class AuthService {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
+      include: { role: true },
     });
 
     if (!user || user.deletedAt || !user.emailVerificationToken) {
@@ -557,7 +561,7 @@ export class AuthService {
     const tokens = generateAuthTokens({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: typeof user.role === 'object' && user.role !== null ? (user.role as any).name : user.role,
     });
 
     const updatedUser = await prisma.user.update({
@@ -783,6 +787,13 @@ export class AuthService {
   async getMe(userId: string): Promise<Record<string, unknown>> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        userPermissions: {
+          include: {
+            permission: true,
+          },
+        },
+      },
     });
 
     if (!user || user.deletedAt) {

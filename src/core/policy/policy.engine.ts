@@ -83,9 +83,13 @@ export async function can<TResource = Record<string, unknown>>(
   }
 
   // 3. Evaluate allow ("can") policy rules
+  let hasMatchingActionRule = false;
+
   for (const rule of rules) {
     if (rule.inverted) continue;
     if (!actionMatches(rule.action, action)) continue;
+
+    hasMatchingActionRule = true;
 
     // Role check
     if (rule.roles && !rule.roles.includes(user.role as never)) {
@@ -109,15 +113,20 @@ export async function can<TResource = Record<string, unknown>>(
     }
   }
 
-  // 4. Fallback to standard RBAC namespace if no policy explicitly matched or subject has no policy
+  // If the policy explicitly registered rules for this action and none granted access, deny!
+  if (hasMatchingActionRule) {
+    return false;
+  }
+
+  // 4. Fallback to standard RBAC namespace only if no policy rules exist for this action or subject
   const pluralSubject = `${subject.toLowerCase()}s`;
   const singularSubject = subject.toLowerCase();
 
   const rbacCandidates = [
-    `${pluralSubject}:*`,
     `${pluralSubject}:${action}`,
-    `${singularSubject}:*`,
     `${singularSubject}:${action}`,
+    `${pluralSubject}:*`,
+    `${singularSubject}:*`,
   ];
 
   for (const candidate of rbacCandidates) {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Request, Response } from 'express';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../src/constants/roles';
 import {
   authenticate,
   authorize,

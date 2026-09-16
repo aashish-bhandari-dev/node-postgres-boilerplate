@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../src/constants/roles';
 import { requirePolicy } from '../../../src/middlewares/policy.middleware';
 import { definePolicy, PolicyRegistry } from '../../../src/core/policy/policy.registry';
 

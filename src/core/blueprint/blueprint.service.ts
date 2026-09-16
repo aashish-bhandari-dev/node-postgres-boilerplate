@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/apiError';
 import { PaginatedResult } from '../../types';
 import { BlueprintQueryOptions, BlueprintConfig } from './types';
 import { UserAuthContext } from '../../utils/rbac.util';
+import { authorizePolicy } from '../policy/policy.engine';
 
 interface GenericPrismaDelegate {
   count(args?: Record<string, unknown>): Promise<number>;
@@ -271,7 +272,16 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
   /**
    * Create a new record
    */
-  async create(data: Record<string, unknown>): Promise<TModel> {
+  async create(
+    data: Record<string, unknown>,
+    options: { user?: UserAuthContext | null } = {},
+  ): Promise<TModel> {
+    if (this.config.policy?.subject && options.user) {
+      await authorizePolicy(options.user, 'create', this.config.policy.subject, {
+        resource: data as never,
+      });
+    }
+
     const processedData = await this.beforeCreate(data);
 
     const queryArgs: Record<string, unknown> = {
@@ -293,10 +303,20 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
   /**
    * Update an existing record
    */
-  async update(rawId: string, data: Record<string, unknown>): Promise<TModel> {
+  async update(
+    rawId: string,
+    data: Record<string, unknown>,
+    options: { user?: UserAuthContext | null } = {},
+  ): Promise<TModel> {
     const id = this.parseId(rawId);
     // Ensure record exists
-    await this.getById(rawId);
+    const existing = await this.getById(rawId, options);
+
+    if (this.config.policy?.subject && options.user) {
+      await authorizePolicy(options.user, 'update', this.config.policy.subject, {
+        resource: existing,
+      });
+    }
 
     const processedData = await this.beforeUpdate(id, data);
 
@@ -320,10 +340,19 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
   /**
    * Delete an existing record
    */
-  async delete(rawId: string): Promise<TModel> {
+  async delete(
+    rawId: string,
+    options: { user?: UserAuthContext | null } = {},
+  ): Promise<TModel> {
     const id = this.parseId(rawId);
     // Ensure record exists
-    const record = await this.getById(rawId);
+    const record = await this.getById(rawId, options);
+
+    if (this.config.policy?.subject && options.user) {
+      await authorizePolicy(options.user, 'delete', this.config.policy.subject, {
+        resource: record,
+      });
+    }
 
     await this.beforeDelete(id);
 

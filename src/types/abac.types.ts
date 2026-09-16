@@ -1,4 +1,4 @@
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../constants/roles';
 import { UserAuthContext } from '../utils/rbac.util';
 import { PermissionString } from '../constants/permissions';
 

@@ -1,4 +1,4 @@
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../constants/roles';
 import {
   AccessAction,
   AccessSubject,

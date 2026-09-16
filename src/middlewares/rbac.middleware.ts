@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../constants/roles';
 import { ApiError } from '../utils/apiError';
 import { PermissionString } from '../constants/permissions';
 import {
@@ -78,7 +78,7 @@ export const requireAllPermissions = (...permissions: PermissionString[]) => {
  * Usage: router.get('/admin', authenticate(), requireRole(UserRole.ADMIN), handler);
  */
 export const requireRole = (
-  role: UserRole,
+  role: UserRole | string,
   options: { allowHigher?: boolean } = { allowHigher: true },
 ) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
