@@ -307,6 +307,17 @@ export class AuthService {
         lastLoginIp: ip ?? null,
         refreshTokenHash: hashToken(tokens.refreshToken),
       },
+      include: {
+        role: {
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return {
@@ -788,6 +799,15 @@ export class AuthService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
+        role: {
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
         userPermissions: {
           include: {
             permission: true,

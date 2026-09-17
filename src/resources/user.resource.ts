@@ -73,16 +73,29 @@ export class UserResource extends JsonResource<UserResourceData> {
       provider: this.resource.provider,
       permissions:
         this.resource.permissions ??
-         getUserPermissions({
-           id: this.resource.id,
-           role:
-             typeof this.resource.role === 'object' && this.resource.role !== null
-               ? (this.resource.role as any).name
-               : (this.resource.role ?? ''),
-           hasCustomPermissions: this.resource.hasCustomPermissions,
-           userPermissions: this.resource.userPermissions,
-           metadata: this.resource.metadata,
-         }),
+        getUserPermissions({
+          id: this.resource.id,
+          role:
+            typeof this.resource.role === 'object' && this.resource.role !== null
+              ? (this.resource.role as any).name
+              : (this.resource.role ?? ''),
+          roleHierarchy:
+            typeof this.resource.role === 'object' && this.resource.role !== null
+              ? (this.resource.role as any).hierarchy
+              : undefined,
+          rolePermissions:
+            typeof this.resource.role === 'object' &&
+            this.resource.role !== null &&
+            'rolePermissions' in this.resource.role &&
+            Array.isArray((this.resource.role as any).rolePermissions)
+              ? (this.resource.role as any).rolePermissions.map((rp: any) =>
+                  typeof rp === 'string' ? rp : rp.permission?.name ?? rp.name,
+                ).filter(Boolean)
+              : undefined,
+          hasCustomPermissions: this.resource.hasCustomPermissions,
+          userPermissions: this.resource.userPermissions,
+          metadata: this.resource.metadata,
+        }),
       lastLoginAt: this.resource.lastLoginAt ?? null,
       metadata: this.resource.metadata ?? {},
       createdAt: this.resource.createdAt,

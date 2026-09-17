@@ -1,4 +1,4 @@
-import { UserAuthContext, hasPermission } from '../../utils/rbac.util';
+import { UserAuthContext, hasPermission, hasAnyRole } from '../../utils/rbac.util';
 import { Permission } from '../../constants/permissions';
 import { AccessAction, AccessSubject, CanOptions } from '../../types/abac.types';
 import { PolicyRegistry } from './policy.registry';
@@ -62,7 +62,7 @@ export async function can<TResource = Record<string, unknown>>(
     if (!actionMatches(rule.action, action)) continue;
 
     // Role check if rule specifies roles
-    if (rule.roles && !rule.roles.includes(user.role as never)) {
+    if (rule.roles && !hasAnyRole(user, rule.roles, { allowHigher: false })) {
       continue;
     }
 
@@ -92,7 +92,7 @@ export async function can<TResource = Record<string, unknown>>(
     hasMatchingActionRule = true;
 
     // Role check
-    if (rule.roles && !rule.roles.includes(user.role as never)) {
+    if (rule.roles && !hasAnyRole(user, rule.roles, { allowHigher: false })) {
       continue;
     }
 

@@ -8,6 +8,7 @@ import {
   ListRolesQuery,
 } from '../validations/role.validation';
 import { SYSTEM_PERMISSIONS } from '../constants/permissions';
+import { permissionService } from './permission.service';
 
 export class RoleService {
   /**
@@ -177,6 +178,8 @@ export class RoleService {
       throw ApiError.internal('Failed to create role');
     }
 
+    permissionService.clearCache();
+
     return new RoleResource(createdRole).toArray();
   }
 
@@ -261,6 +264,8 @@ export class RoleService {
       throw ApiError.internal('Failed to update role');
     }
 
+    permissionService.clearCache();
+
     return new RoleResource(updatedRole).toArray();
   }
 
@@ -296,6 +301,8 @@ export class RoleService {
     const deleted = await prisma.role.delete({
       where: { id },
     });
+
+    permissionService.clearCache();
 
     return new RoleResource(deleted).toArray();
   }
@@ -349,6 +356,8 @@ export class RoleService {
     if (!updated) {
       throw ApiError.internal('Failed to assign permissions to role');
     }
+
+    permissionService.clearCache();
 
     return new RoleResource(updated).toArray();
   }

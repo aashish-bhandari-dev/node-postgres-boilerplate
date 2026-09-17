@@ -1,10 +1,11 @@
-import { UserRole } from '../../../constants/roles';
+import { UserRole, RoleHierarchy } from '../../../constants/roles';
 import { definePolicy } from '../policy.registry';
-import { hasPermission } from '../../../utils/rbac.util';
+import { hasPermission, isRoleAtLeast } from '../../../utils/rbac.util';
 
 export interface UserResourceEntity {
   id: string;
-  role?: string;
+  role?: string | { name?: string; hierarchy?: number };
+  roleHierarchy?: number;
   [key: string]: unknown;
 }
 
@@ -37,24 +38,52 @@ export function registerUserPolicy(): void {
         return true;
       }
 
+      const userRoleName =
+        typeof user.role === 'object' && user.role !== null
+          ? user.role.name
+          : String(user.role ?? '');
+
+      const targetRoleName =
+        typeof targetUser.role === 'object' && targetUser.role !== null
+          ? targetUser.role.name ?? ''
+          : String(targetUser.role ?? '');
+
       // ABAC constraint: Non-SuperAdmin cannot edit or demote a SUPER_ADMIN
       if (
-        targetUser.role === UserRole.SUPER_ADMIN &&
-        user.role !== UserRole.SUPER_ADMIN
+        targetRoleName === UserRole.SUPER_ADMIN &&
+        userRoleName !== UserRole.SUPER_ADMIN
       ) {
         return false;
       }
 
-      // ABAC constraint: Managers can only update regular USERs
-      if (user.role === UserRole.MANAGER) {
-        return targetUser.role === UserRole.USER;
+      // Role hierarchy enforcement: User cannot update another user who has equal or higher hierarchy,
+      // unless user is SUPER_ADMIN
+      if (userRoleName !== UserRole.SUPER_ADMIN) {
+        const userHierarchy =
+          user.roleHierarchy ??
+          RoleHierarchy[userRoleName] ??
+          0;
+
+        const targetHierarchy =
+          targetUser.roleHierarchy ??
+          (typeof targetUser.role === 'object' && targetUser.role !== null
+            ? targetUser.role.hierarchy
+            : undefined) ??
+          RoleHierarchy[targetRoleName] ??
+          0;
+
+        // An updater must have strictly greater hierarchy than the target user being updated
+        if (userHierarchy <= targetHierarchy) {
+          return false;
+        }
       }
 
       return true;
     });
 
     // 4. Delete user accounts:
-    // Requires users:delete permission, cannot delete oneself, cannot delete SUPER_ADMIN
+    // Requires users:delete permission, cannot delete oneself, cannot delete SUPER_ADMIN,
+    // and must have ADMIN or higher privileges (hierarchy >= 80)
     builder.can('delete', 'User').when((user, targetUser) => {
       const canDelete = hasPermission(user, 'users:delete');
       if (!canDelete) {
@@ -70,16 +99,41 @@ export function registerUserPolicy(): void {
         return false;
       }
 
+      const targetRoleName =
+        typeof targetUser.role === 'object' && targetUser.role !== null
+          ? targetUser.role.name ?? ''
+          : String(targetUser.role ?? '');
+
       // ABAC constraint: Cannot delete a SUPER_ADMIN
-      if (targetUser.role === UserRole.SUPER_ADMIN) {
+      if (targetRoleName === UserRole.SUPER_ADMIN) {
         return false;
       }
 
-      // Only ADMIN and SUPER_ADMIN can delete users
-      return user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
+      const userRoleName =
+        typeof user.role === 'object' && user.role !== null
+          ? user.role.name
+          : String(user.role ?? '');
+
+      // Only ADMIN and SUPER_ADMIN (or roles with hierarchy >= ADMIN level 80) can delete users
+      const hasAdminLevel = isRoleAtLeast(userRoleName, UserRole.ADMIN, {
+        currentHierarchy: user.roleHierarchy,
+      });
+
+      return hasAdminLevel;
     });
 
     // 5. Explicit deny: Non-admins cannot delete user accounts
-    builder.cannot('delete', 'User').whenRole(UserRole.USER, UserRole.MANAGER);
+    builder.cannot('delete', 'User').when((user) => {
+      const userRoleName =
+        typeof user.role === 'object' && user.role !== null
+          ? user.role.name
+          : String(user.role ?? '');
+
+      const hasAdminLevel = isRoleAtLeast(userRoleName, UserRole.ADMIN, {
+        currentHierarchy: user.roleHierarchy,
+      });
+
+      return !hasAdminLevel;
+    });
   });
 }

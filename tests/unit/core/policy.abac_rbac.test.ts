@@ -98,5 +98,40 @@ describe('RBAC + ABAC User Policy Synergy', () => {
       expect(await can(admin1, 'delete', 'User', { id: admin1.id, role: UserRole.ADMIN })).toBe(false);
       expect(await can(admin1, 'delete', 'User', superAdmin)).toBe(false);
     });
+
+    it('should support dynamic custom roles with hierarchy in ABAC policy evaluation', async () => {
+      const customHrDirector = {
+        id: 'hr-1',
+        role: 'HR_DIRECTOR',
+        roleHierarchy: 60,
+        permissions: ['users:update'],
+      };
+
+      const customSupport = {
+        id: 'support-1',
+        role: 'SUPPORT_AGENT',
+        roleHierarchy: 30,
+        permissions: ['users:read'],
+      };
+
+      // HR Director (hierarchy 60) can update Support Agent (hierarchy 30)
+      expect(await can(customHrDirector, 'update', 'User', customSupport)).toBe(true);
+
+      // Support Agent (hierarchy 30) CANNOT update HR Director (hierarchy 60) even with permission
+      const customSupportWithUpdate = {
+        ...customSupport,
+        permissions: ['users:update'],
+      };
+      expect(await can(customSupportWithUpdate, 'update', 'User', customHrDirector)).toBe(false);
+
+      // Custom high-level Executive Admin (hierarchy 90) can delete regular user
+      const customExecutiveAdmin = {
+        id: 'exec-1',
+        role: 'EXECUTIVE_ADMIN',
+        roleHierarchy: 90,
+        permissions: ['users:delete'],
+      };
+      expect(await can(customExecutiveAdmin, 'delete', 'User', regularUser1)).toBe(true);
+    });
   });
 });
