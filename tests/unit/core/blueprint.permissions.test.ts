@@ -56,6 +56,31 @@ describe('Blueprint Declarative Permissions', () => {
     expect(deleteHandlers.length).toBe(3);
   });
 
+  it('should register both PUT and PATCH handlers with update middlewares on /:id', () => {
+    const router = createBlueprintRouter(
+      {
+        model: 'user',
+        permissions: {
+          update: Permission.USERS_UPDATE,
+        },
+      },
+      mockController,
+    );
+
+    const idRoute = router.stack.find((layer) => layer.route?.path === '/:id');
+    expect(idRoute).toBeDefined();
+
+    const putHandlers = idRoute!.route.stack.filter(
+      (s: { method: string }) => s.method === 'put',
+    );
+    const patchHandlers = idRoute!.route.stack.filter(
+      (s: { method: string }) => s.method === 'patch',
+    );
+
+    expect(putHandlers.length).toBe(3); // auth + requirePermission + update
+    expect(patchHandlers.length).toBe(3); // auth + requirePermission + update
+  });
+
   it('should deny execution when user lacks required permission on route handler', () => {
     const router = createBlueprintRouter(
       {

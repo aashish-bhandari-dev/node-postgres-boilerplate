@@ -73,6 +73,7 @@ export function createBlueprintRouter(
   router
     .route('/:id')
     .get(...getMiddlewares, controller.getById)
+    .put(...updateMiddlewares, controller.update)
     .patch(...updateMiddlewares, controller.update)
     .delete(...deleteMiddlewares, controller.delete);
 

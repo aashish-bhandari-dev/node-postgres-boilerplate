@@ -34,6 +34,7 @@ router.get('/', (_req: Request, res: Response) => {
       `GET    /${m.path} (List with pagination, search, sort)`,
       `GET    /${m.path}/:id (Get single record)`,
       `POST   /${m.path} (Create record)`,
+      `PUT    /${m.path}/:id (Update/replace record)`,
       `PATCH  /${m.path}/:id (Update record)`,
       `DELETE /${m.path}/:id (Delete record)`,
     ],

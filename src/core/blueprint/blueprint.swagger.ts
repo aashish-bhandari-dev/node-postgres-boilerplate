@@ -413,6 +413,7 @@ export function generateBlueprintSwagger(modules: Blueprint[]): BlueprintSwagger
     };
 
     // GET /api/v1/{path}/{id}
+    // PUT /api/v1/{path}/{id}
     // PATCH /api/v1/{path}/{id}
     // DELETE /api/v1/{path}/{id}
     const itemPath = `${basePath}/{id}`;
@@ -447,6 +448,66 @@ export function generateBlueprintSwagger(modules: Blueprint[]): BlueprintSwagger
                     data: { $ref: `#/components/schemas/${modelSchemaName}` },
                   },
                 },
+              },
+            },
+          },
+          '404': {
+            description: `${modelCapitalized} not found`,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: [tagName],
+        summary: `Replace or update ${modelCapitalized} by ID`,
+        description: `Update an existing ${modelName} record by ID.`,
+        operationId: `replace${modelCapitalized}ById`,
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            description: `Unique identifier of the ${modelName}`,
+            schema: { type: 'string' },
+          },
+        ],
+        requestBody: {
+          description: `Fields to update on ${modelName}`,
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: `#/components/schemas/${updateSchemaName}` },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: `${modelCapitalized} updated successfully`,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Record updated successfully',
+                    },
+                    data: { $ref: `#/components/schemas/${modelSchemaName}` },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation error',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
               },
             },
           },

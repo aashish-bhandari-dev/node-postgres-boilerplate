@@ -62,6 +62,7 @@ async function resolveRoleId(
  * - GET    /api/users                 (list with pagination, search across names/email/phone/username, filter, sort) [Protected: users:read]
  * - GET    /api/users/:id             (get single user by ID) [Protected: users:read]
  * - POST   /api/users                 (create user with Zod validation) [Protected: users:create]
+ * - PUT    /api/users/:id             (update user with Zod validation) [Protected: users:update]
  * - PATCH  /api/users/:id             (update user with Zod validation) [Protected: users:update]
  * - DELETE /api/users/:id             (delete user by ID) [Protected: users:delete]
  *

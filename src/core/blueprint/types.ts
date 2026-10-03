@@ -25,7 +25,7 @@ export interface BlueprintPermissionsConfig {
   create?: PermissionString;
 
   /**
-   * Permission required for updating a record (PATCH /:id)
+   * Permission required for updating a record (PUT /:id, PATCH /:id)
    */
   update?: PermissionString;
 
