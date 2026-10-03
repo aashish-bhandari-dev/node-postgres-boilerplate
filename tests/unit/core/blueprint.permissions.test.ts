@@ -189,5 +189,61 @@ describe('Blueprint Declarative Permissions', () => {
       }),
     );
   });
+
+  it('should apply searchTerm across searchableFields in blueprint service', async () => {
+    const mockDelegate = {
+      count: vi.fn().mockResolvedValue(1),
+      findMany: vi.fn().mockResolvedValue([{ id: 'art-1', title: 'Hello World' }]),
+    };
+
+    class TestService extends BaseBlueprintService {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      protected override get delegate(): any {
+        return mockDelegate;
+      }
+    }
+
+    const searchableService = new TestService('article', {
+      model: 'article',
+      searchableFields: ['title', 'content'],
+    });
+
+    // Test single word searchTerm
+    await searchableService.getAll({ searchTerm: 'hello' });
+    expect(mockDelegate.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [
+            { title: { contains: 'hello', mode: 'insensitive' } },
+            { content: { contains: 'hello', mode: 'insensitive' } },
+          ],
+        }),
+      }),
+    );
+
+    // Test multi-word searchTerm
+    mockDelegate.findMany.mockClear();
+    await searchableService.getAll({ searchTerm: 'hello world' });
+    expect(mockDelegate.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          AND: [
+            {
+              OR: [
+                { title: { contains: 'hello', mode: 'insensitive' } },
+                { content: { contains: 'hello', mode: 'insensitive' } },
+              ],
+            },
+            {
+              OR: [
+                { title: { contains: 'world', mode: 'insensitive' } },
+                { content: { contains: 'world', mode: 'insensitive' } },
+              ],
+            },
+          ],
+        }),
+      }),
+    );
+  });
 });
 

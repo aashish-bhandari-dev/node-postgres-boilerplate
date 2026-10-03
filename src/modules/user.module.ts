@@ -1,5 +1,9 @@
 import { defineBlueprint } from '../core/blueprint';
-import { createUserSchema, updateUserSchema } from '../validations/user.validation';
+import {
+  listUsersQuerySchema,
+  createUserSchema,
+  updateUserSchema,
+} from '../validations/user.validation';
 import { UserResource } from '../resources/user.resource';
 import { Permission } from '../constants/permissions';
 import { permissionController } from '../controllers/permission.controller';
@@ -76,7 +80,7 @@ async function resolveRoleId(
 export const userModule = defineBlueprint({
   model: 'user',
   searchableFields: ['firstName', 'lastName', 'username', 'email', 'phone'],
-  filterFields: ['roleId', 'provider', 'isActive', 'isEmailVerified', 'isDeactivated'],
+  filterFields: ['role', 'roleId', 'provider', 'isActive', 'isEmailVerified', 'isDeactivated'],
   defaultSort: { field: 'createdAt', order: 'desc' },
   include: {
     role: {
@@ -103,6 +107,7 @@ export const userModule = defineBlueprint({
     delete: Permission.USERS_DELETE,
   },
   validation: {
+    list: listUsersQuerySchema,
     create: createUserSchema,
     update: updateUserSchema,
   },

@@ -35,7 +35,7 @@ router.use(authenticate());
  *           type: integer
  *           default: 10
  *       - in: query
- *         name: search
+ *         name: searchTerm
  *         schema:
  *           type: string
  *     responses:

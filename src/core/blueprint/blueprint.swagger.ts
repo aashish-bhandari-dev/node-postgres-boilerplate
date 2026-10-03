@@ -312,7 +312,7 @@ export function generateBlueprintSwagger(modules: Blueprint[]): BlueprintSwagger
 
     if (mod.config.searchableFields && mod.config.searchableFields.length > 0) {
       listParameters.push({
-        name: 'search',
+        name: 'searchTerm',
         in: 'query',
         description: `Search keyword across: ${mod.config.searchableFields.join(', ')}`,
         required: false,

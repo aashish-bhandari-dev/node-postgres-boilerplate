@@ -28,6 +28,9 @@ export function createBlueprintRouter(
   if (config.permissions?.list) {
     listMiddlewares.push(...authMiddleware, requirePermission(config.permissions.list));
   }
+  if (config.validation?.list) {
+    listMiddlewares.push(validateRequest(config.validation.list));
+  }
 
   const getMiddlewares: RequestHandler[] = [];
   if (config.permissions?.get) {

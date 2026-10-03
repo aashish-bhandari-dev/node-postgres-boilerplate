@@ -68,6 +68,25 @@ describe('RoleService', () => {
       expect(result.items[0].permissions).toEqual(['users:read', 'users:create']);
       expect(result.pagination.total).toBe(1);
     });
+
+    it('should query roles with searchTerm when provided', async () => {
+      vi.mocked(prisma.role.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.role.count).mockResolvedValue(0);
+
+      await roleService.getAllRoles({ searchTerm: 'admin' });
+
+      expect(prisma.role.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { name: { contains: 'admin', mode: 'insensitive' } },
+              { displayName: { contains: 'admin', mode: 'insensitive' } },
+              { description: { contains: 'admin', mode: 'insensitive' } },
+            ],
+          }),
+        }),
+      );
+    });
   });
 
   describe('getRoleById', () => {

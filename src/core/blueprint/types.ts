@@ -51,7 +51,7 @@ export interface BlueprintPolicyConfig {
 export interface BlueprintQueryOptions {
   page?: number;
   limit?: number;
-  search?: string;
+  searchTerm?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   filter?: Record<string, unknown>;
@@ -116,6 +116,7 @@ export interface BlueprintConfig<TModel = Record<string, unknown>> {
    * Optional Zod validation schemas for create/update
    */
   validation?: {
+    list?: AnyZodObject;
     create?: AnyZodObject;
     update?: AnyZodObject;
   };

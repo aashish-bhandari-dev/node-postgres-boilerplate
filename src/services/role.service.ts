@@ -21,11 +21,11 @@ export class RoleService {
 
     const where: Record<string, unknown> = {};
 
-    if (query.search) {
+    if (query.searchTerm) {
       where.OR = [
-        { name: { contains: query.search, mode: 'insensitive' } },
-        { displayName: { contains: query.search, mode: 'insensitive' } },
-        { description: { contains: query.search, mode: 'insensitive' } },
+        { name: { contains: query.searchTerm, mode: 'insensitive' } },
+        { displayName: { contains: query.searchTerm, mode: 'insensitive' } },
+        { description: { contains: query.searchTerm, mode: 'insensitive' } },
       ];
     }
 

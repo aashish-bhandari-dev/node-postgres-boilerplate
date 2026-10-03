@@ -33,7 +33,7 @@ router.use(authenticate());
  *           type: string
  *         description: Filter by specific module
  *       - in: query
- *         name: search
+ *         name: searchTerm
  *         schema:
  *           type: string
  *         description: Search keyword

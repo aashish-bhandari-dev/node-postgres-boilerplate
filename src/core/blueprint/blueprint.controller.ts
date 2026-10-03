@@ -26,13 +26,33 @@ export class BaseBlueprintController<
         ? `${req.protocol}://${host}${req.originalUrl}`
         : req.originalUrl;
 
+      const {
+        page,
+        limit,
+        searchTerm,
+        sortBy,
+        sortOrder,
+        filter: rawFilter,
+        ...flatQueryParams
+      } = req.query;
+
+      const nestedFilter =
+        typeof rawFilter === 'object' && rawFilter !== null
+          ? (rawFilter as Record<string, unknown>)
+          : {};
+
+      const combinedFilter: Record<string, unknown> = {
+        ...flatQueryParams,
+        ...nestedFilter,
+      };
+
       const queryOptions: BlueprintQueryOptions = {
-        page: req.query.page ? Number(req.query.page) : undefined,
-        limit: req.query.limit ? Number(req.query.limit) : undefined,
-        search: req.query.search as string | undefined,
-        sortBy: req.query.sortBy as string | undefined,
-        sortOrder: req.query.sortOrder as 'asc' | 'desc' | undefined,
-        filter: req.query.filter as Record<string, unknown> | undefined,
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+        searchTerm: searchTerm ? String(searchTerm).trim() : undefined,
+        sortBy: sortBy as string | undefined,
+        sortOrder: sortOrder as 'asc' | 'desc' | undefined,
+        filter: Object.keys(combinedFilter).length > 0 ? combinedFilter : undefined,
         baseUrl,
         user: req.user,
       };

@@ -22,13 +22,13 @@ export class PermissionController {
 
   /**
    * GET /api/permissions
-   * List all system permissions with metadata (supports ?grouped=true, ?module=..., ?search=...)
+   * List all system permissions with metadata (supports ?grouped=true, ?module=..., ?searchTerm=...)
    */
   async listPermissions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const isGrouped = String(req.query.grouped) === 'true';
       const moduleFilter = req.query.module as string | undefined;
-      const search = (req.query.search as string | undefined)?.toLowerCase();
+      const searchTerm = (req.query.searchTerm as string | undefined)?.toLowerCase();
 
       let permissions = await permissionService.getAllPermissions();
 
@@ -38,12 +38,12 @@ export class PermissionController {
         );
       }
 
-      if (search) {
+      if (searchTerm) {
         permissions = permissions.filter(
           (p) =>
-            p.name.toLowerCase().includes(search) ||
-            p.displayName.toLowerCase().includes(search) ||
-            p.description.toLowerCase().includes(search),
+            p.name.toLowerCase().includes(searchTerm) ||
+            p.displayName.toLowerCase().includes(searchTerm) ||
+            p.description.toLowerCase().includes(searchTerm),
         );
       }
 

@@ -91,6 +91,41 @@ describe('PermissionController', () => {
         }),
       );
     });
+
+    it('should filter permissions when searchTerm is provided', async () => {
+      mockReq.query = { searchTerm: 'write' };
+      const mockList = [
+        {
+          name: 'users:read',
+          displayName: 'View Users',
+          description: '',
+          module: 'users',
+          action: 'read',
+        },
+        {
+          name: 'users:write',
+          displayName: 'Create Users',
+          description: '',
+          module: 'users',
+          action: 'write',
+        },
+      ];
+
+      vi.mocked(permissionService.getAllPermissions).mockResolvedValue(mockList);
+
+      await permissionController.listPermissions(
+        mockReq as Request,
+        mockRes as Response,
+        mockNext,
+      );
+
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          data: [mockList[1]],
+        }),
+      );
+    });
   });
 
   describe('getUserPermissions', () => {

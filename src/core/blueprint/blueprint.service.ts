@@ -132,20 +132,54 @@ export class BaseBlueprintService<TModel = Record<string, unknown>> {
 
     const where: Record<string, unknown> = {};
 
-    // Search functionality across configured fields
-    if (options.search && this.config.searchableFields?.length) {
-      where.OR = this.config.searchableFields.map((field) => ({
-        [field]: { contains: options.search, mode: 'insensitive' },
-      }));
+    // Search functionality across configured fields (handles single word & multi-word queries)
+    if (options.searchTerm && this.config.searchableFields?.length) {
+      const trimmedSearch = options.searchTerm.trim();
+      const tokens = trimmedSearch.split(/\s+/).filter(Boolean);
+
+      if (tokens.length > 1) {
+        // Multi-word search: every token must match at least one searchable field
+        where.AND = tokens.map((token) => ({
+          OR: this.config.searchableFields!.map((field) => ({
+            [field]: { contains: token, mode: 'insensitive' },
+          })),
+        }));
+      } else if (tokens.length === 1) {
+        where.OR = this.config.searchableFields.map((field) => ({
+          [field]: { contains: tokens[0], mode: 'insensitive' },
+        }));
+      }
     }
 
     // Exact match filters
     if (options.filter && typeof options.filter === 'object') {
       const allowedFilters = this.config.filterFields;
-      for (const [key, value] of Object.entries(options.filter)) {
+      for (const [key, rawValue] of Object.entries(options.filter)) {
         if (!allowedFilters || allowedFilters.includes(key)) {
-          if (value !== undefined && value !== '') {
-            where[key] = value;
+          if (rawValue !== undefined && rawValue !== '') {
+            let parsedValue: unknown = rawValue;
+
+            // Coerce string booleans to actual booleans for Prisma
+            if (rawValue === 'true' || rawValue === true) {
+              parsedValue = true;
+            } else if (rawValue === 'false' || rawValue === false) {
+              parsedValue = false;
+            }
+
+            // Relation filter for role (support role name or role UUID)
+            if (key === 'role' && typeof rawValue === 'string') {
+              const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawValue);
+              if (isUuid) {
+                where.roleId = rawValue;
+              } else {
+                where.role = {
+                  name: { equals: rawValue, mode: 'insensitive' },
+                };
+              }
+              continue;
+            }
+
+            where[key] = parsedValue;
           }
         }
       }

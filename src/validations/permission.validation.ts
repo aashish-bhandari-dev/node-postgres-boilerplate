@@ -7,7 +7,7 @@ export const listPermissionsQuerySchema = z.object({
       z.boolean().optional().default(false),
     ),
     module: z.string().optional(),
-    search: z.string().optional(),
+    searchTerm: z.string().optional(),
   }),
 });
 
