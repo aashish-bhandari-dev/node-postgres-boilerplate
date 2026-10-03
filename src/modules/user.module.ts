@@ -10,6 +10,50 @@ import {
   updateUserPermissionsSchema,
   userIdParamSchema,
 } from '../validations/permission.validation';
+import { prisma } from '../config/db';
+import { hashPassword } from '../utils/password.util';
+import { ApiError } from '../utils/apiError';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolveRoleId(
+  roleInput?: unknown,
+  roleIdInput?: unknown,
+  defaultRoleName?: string,
+): Promise<string> {
+  if (roleIdInput && typeof roleIdInput === 'string') {
+    const role = await prisma.role.findUnique({
+      where: { id: roleIdInput },
+    });
+    if (!role) {
+      throw ApiError.badRequest(`Role with ID '${roleIdInput}' does not exist`);
+    }
+    return role.id;
+  }
+
+  const roleValue =
+    typeof roleInput === 'string' && roleInput.trim().length > 0
+      ? roleInput.trim()
+      : defaultRoleName;
+
+  if (!roleValue) {
+    throw ApiError.badRequest('Role is required');
+  }
+
+  const isUuid = UUID_REGEX.test(roleValue);
+
+  const role = isUuid
+    ? await prisma.role.findUnique({ where: { id: roleValue } })
+    : await prisma.role.findFirst({
+        where: { name: { equals: roleValue, mode: 'insensitive' } },
+      });
+
+  if (!role) {
+    throw ApiError.badRequest(`Role '${roleValue}' does not exist`);
+  }
+
+  return role.id;
+}
 
 /**
  * User Module
@@ -33,6 +77,22 @@ export const userModule = defineBlueprint({
   searchableFields: ['firstName', 'lastName', 'username', 'email', 'phone'],
   filterFields: ['roleId', 'provider', 'isActive', 'isEmailVerified', 'isDeactivated'],
   defaultSort: { field: 'createdAt', order: 'desc' },
+  include: {
+    role: {
+      include: {
+        rolePermissions: {
+          include: {
+            permission: true,
+          },
+        },
+      },
+    },
+    userPermissions: {
+      include: {
+        permission: true,
+      },
+    },
+  },
   resource: UserResource,
   permissions: {
     list: Permission.USERS_READ,
@@ -47,6 +107,34 @@ export const userModule = defineBlueprint({
   },
   policy: {
     subject: 'User',
+  },
+  hooks: {
+    beforeCreate: async (data) => {
+      if (typeof data.password === 'string' && data.password.length > 0) {
+        data.password = await hashPassword(data.password);
+      }
+      if (typeof data.email === 'string') {
+        data.email = data.email.toLowerCase().trim();
+      }
+      const roleId = await resolveRoleId(data.role, data.roleId, 'USER');
+      data.roleId = roleId;
+      delete data.role;
+      return data;
+    },
+    beforeUpdate: async (_id, data) => {
+      if (typeof data.password === 'string' && data.password.length > 0) {
+        data.password = await hashPassword(data.password);
+      }
+      if (typeof data.email === 'string') {
+        data.email = data.email.toLowerCase().trim();
+      }
+      if (data.roleId !== undefined || data.role !== undefined) {
+        const roleId = await resolveRoleId(data.role, data.roleId);
+        data.roleId = roleId;
+        delete data.role;
+      }
+      return data;
+    },
   },
   extendRouter: (router) => {
     router.get(
